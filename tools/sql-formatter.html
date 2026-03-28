@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Formatter — DevToolkit</title>
+<meta name="description" content="Formatez et indentez vos requêtes SQL. Support MySQL, PostgreSQL, SQLite.">
+<style>
+  :root { --bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--dim:#94a3b8;--success:#10b981;--error:#ef4444; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header a{color:var(--dim);text-decoration:none;font-size:14px}header a:hover{color:var(--text)}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .container{max-width:1000px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--dim);margin-bottom:32px}
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.panels{grid-template-columns:1fr}}
+  .panel label{display:block;font-weight:600;margin-bottom:8px;color:var(--dim)}
+  textarea{width:100%;height:320px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:14px;font-family:'Fira Code','Cascadia Code',monospace;font-size:13px;resize:vertical;outline:none;transition:border-color 0.2s}
+  textarea:focus{border-color:var(--accent)}
+  .actions{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+  .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s}
+  .btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#4f46e5}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+  .options{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap}
+  .option-group label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--dim);font-size:14px}
+  select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:14px}
+  .status{font-size:13px;color:var(--success);margin-top:8px}
+  .error{color:var(--error)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">← DevToolkit</a>
+  <span class="logo">SQL Formatter</span>
+</header>
+<div class="container">
+  <h1>🗄️ SQL Formatter</h1>
+  <p class="subtitle">Formatez et indentez vos requêtes SQL. Support SELECT, INSERT, UPDATE, DELETE, CREATE TABLE.</p>
+  
+  <div class="options">
+    <div class="option-group">
+      <label>Indentation :
+        <select id="indent">
+          <option value="2">2 espaces</option>
+          <option value="4" selected>4 espaces</option>
+          <option value="tab">Tab</option>
+        </select>
+      </label>
+    </div>
+    <div class="option-group">
+      <label>Casse des mots-clés :
+        <select id="keywordCase">
+          <option value="upper">MAJUSCULES</option>
+          <option value="lower">minuscules</option>
+          <option value="keep">Garder</option>
+        </select>
+      </label>
+    </div>
+    <div class="option-group">
+      <label><input type="checkbox" id="newlineComma"> Virgule en début de ligne</label>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="formatSQL()">✨ Formatter</button>
+    <button class="btn btn-secondary" onclick="minifySQL()">📦 Minifier</button>
+    <button class="btn btn-secondary" onclick="copyOutput()">📋 Copier</button>
+    <button class="btn btn-secondary" onclick="clearAll()">🗑️ Effacer</button>
+  </div>
+  
+  <div class="panels">
+    <div class="panel">
+      <label>SQL source</label>
+      <textarea id="input" placeholder="SELECT u.id, u.name, u.email, COUNT(o.id) as order_count FROM users u LEFT JOIN orders o ON u.id = o.user_id WHERE u.active = 1 AND u.created_at > '2025-01-01' GROUP BY u.id HAVING order_count > 5 ORDER BY order_count DESC LIMIT 20;"></textarea>
+    </div>
+    <div class="panel">
+      <label>SQL formaté</label>
+      <textarea id="output" readonly placeholder="Le SQL formaté apparaîtra ici..."></textarea>
+    </div>
+  </div>
+  <div id="status" class="status"></div>
+</div>
+
+<script>
+const KEYWORDS = ['SELECT','FROM','WHERE','AND','OR','NOT','IN','EXISTS','BETWEEN','LIKE','IS','NULL','ORDER BY','GROUP BY','HAVING','LIMIT','OFFSET','JOIN','LEFT JOIN','RIGHT JOIN','INNER JOIN','OUTER JOIN','FULL JOIN','CROSS JOIN','ON','AS','DISTINCT','COUNT','SUM','AVG','MIN','MAX','COALESCE','CASE','WHEN','THEN','ELSE','END','INSERT INTO','VALUES','UPDATE','SET','DELETE FROM','CREATE TABLE','ALTER TABLE','DROP TABLE','PRIMARY KEY','FOREIGN KEY','REFERENCES','NOT NULL','UNIQUE','DEFAULT','INDEX','IF EXISTS','IF NOT EXISTS','WITH','UNION','UNION ALL','EXCEPT','INTERSECT','RETURNING','EXPLAIN','ANALYZE'];
+
+function getIndent() {
+  const v = document.getElementById('indent').value;
+  return v === 'tab' ? '\t' : ' '.repeat(parseInt(v));
+}
+
+function applyKeywordCase(sql, caseType) {
+  if (caseType === 'keep') return sql;
+  const upper = caseType === 'upper';
+  // Replace keywords
+  let result = sql;
+  const allKw = [...KEYWORDS].sort((a,b) => b.length - a.length);
+  for (const kw of allKw) {
+    const regex = new RegExp('\\b' + kw.replace(/ /g,'\\s+') + '\\b', 'gi');
+    result = result.replace(regex, m => upper ? kw : kw.toLowerCase());
+  }
+  return result;
+}
+
+function formatSQL() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  const indent = getIndent();
+  const kCase = document.getElementById('keywordCase').value;
+  const newlineComma = document.getElementById('newlineComma').checked;
+  
+  try {
+    let sql = applyKeywordCase(input, kCase);
+    
+    // Split by major keywords
+    const MAJOR = kCase === 'lower' 
+      ? ['select','from','where','left join','right join','inner join','full join','outer join','cross join','join','group by','having','order by','limit','offset','union all','union','except','intersect','on','set','values','returning']
+      : kCase === 'upper'
+      ? ['SELECT','FROM','WHERE','LEFT JOIN','RIGHT JOIN','INNER JOIN','FULL JOIN','OUTER JOIN','CROSS JOIN','JOIN','GROUP BY','HAVING','ORDER BY','LIMIT','OFFSET','UNION ALL','UNION','EXCEPT','INTERSECT','ON','SET','VALUES','RETURNING']
+      : ['SELECT','FROM','WHERE','LEFT JOIN','RIGHT JOIN','INNER JOIN','FULL JOIN','OUTER JOIN','CROSS JOIN','JOIN','GROUP BY','HAVING','ORDER BY','LIMIT','OFFSET','UNION ALL','UNION','EXCEPT','INTERSECT','ON','SET','VALUES','RETURNING'];
+    
+    let formatted = sql;
+    for (const kw of MAJOR) {
+      const regex = new RegExp('\\b' + kw.replace(/ /g, '\\s+') + '\\b', 'gi');
+      formatted = formatted.replace(regex, '\n' + (kCase === 'upper' ? kw.toUpperCase() : kCase === 'lower' ? kw.toLowerCase() : kw) + ' ');
+    }
+    
+    // Handle commas
+    if (newlineComma) {
+      formatted = formatted.replace(/,\s*/g, '\n' + indent + ', ');
+    } else {
+      formatted = formatted.replace(/,\s*/g, ',\n' + indent);
+    }
+    
+    // AND / OR
+    const andOr = kCase === 'lower' ? ['and','or'] : ['AND', 'OR'];
+    for (const kw of andOr) {
+      const regex = new RegExp('\\b' + kw + '\\b', 'gi');
+      formatted = formatted.replace(regex, '\n' + indent + (kCase === 'upper' ? kw.toUpperCase() : kw.toLowerCase()) + ' ');
+    }
+    
+    // Clean up multiple newlines and leading spaces
+    formatted = formatted.split('\n').map(l => l.trim()).filter(l => l).join('\n');
+    
+    // Add indentation for columns in SELECT
+    const lines = formatted.split('\n');
+    const result = [];
+    let inSelect = false;
+    for (const line of lines) {
+      const upper = line.trim().toUpperCase();
+      if (upper.startsWith('SELECT') || upper.startsWith('SET') || upper.startsWith('VALUES')) {
+        inSelect = true;
+        result.push(line);
+      } else if (['FROM','WHERE','JOIN','LEFT','RIGHT','INNER','OUTER','FULL','CROSS','GROUP','HAVING','ORDER','LIMIT','OFFSET','UNION','EXCEPT','INTERSECT'].some(k => upper.startsWith(k))) {
+        inSelect = false;
+        result.push(line);
+      } else if (inSelect && (line.startsWith(',') || line.endsWith(','))) {
+        result.push(indent + line);
+      } else {
+        result.push(inSelect ? indent + line : line);
+      }
+    }
+    
+    document.getElementById('output').value = result.join('\n');
+    document.getElementById('status').textContent = `✅ Formaté — ${result.length} lignes`;
+    document.getElementById('status').className = 'status';
+  } catch(e) {
+    document.getElementById('status').textContent = '❌ Erreur : ' + e.message;
+    document.getElementById('status').className = 'status error';
+  }
+}
+
+function minifySQL() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  const minified = input.replace(/\s+/g, ' ').replace(/\s*,\s*/g, ', ').trim();
+  document.getElementById('output').value = minified;
+  document.getElementById('status').textContent = `📦 Minifié — ${minified.length} caractères`;
+}
+
+function copyOutput() {
+  const out = document.getElementById('output').value;
+  if (!out) return;
+  navigator.clipboard.writeText(out).then(() => {
+    document.getElementById('status').textContent = '✅ Copié dans le presse-papiers';
+  });
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('status').textContent = '';
+}
+</script>
+</body>
+</html>

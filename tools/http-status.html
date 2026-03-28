@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Status Codes — DevToolkit</title>
+<meta name="description" content="Référence complète des codes HTTP. Cherchez par code ou par description. 1xx, 2xx, 3xx, 4xx, 5xx.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--dim:#94a3b8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header a{color:var(--dim);text-decoration:none;font-size:14px}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .container{max-width:900px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--dim);margin-bottom:24px}
+  .search-wrap{position:relative;margin-bottom:24px}
+  .search-wrap input{width:100%;padding:12px 16px 12px 42px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;outline:none}
+  .search-wrap input:focus{border-color:var(--accent)}
+  .search-wrap::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%)}
+  .filters{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--dim);cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s}
+  .filter-btn.active,.filter-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+  .section{margin-bottom:32px}
+  .section-title{font-size:1.1rem;font-weight:700;margin-bottom:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .s1{color:#60a5fa}.s2{color:#34d399}.s3{color:#fbbf24}.s4{color:#f87171}.s5{color:#e879f9}
+  .status-grid{display:grid;gap:8px}
+  .status-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;gap:16px;align-items:flex-start;transition:border-color 0.2s;cursor:default}
+  .status-card:hover{border-color:var(--accent)}
+  .code{font-family:'Fira Code',monospace;font-size:18px;font-weight:800;min-width:50px}
+  .name{font-weight:600;margin-bottom:4px}
+  .desc{color:var(--dim);font-size:13px;line-height:1.5}
+  .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:8px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">← DevToolkit</a>
+  <span class="logo">HTTP Status Codes</span>
+</header>
+<div class="container">
+  <h1>🌐 HTTP Status Codes</h1>
+  <p class="subtitle">Référence complète des codes HTTP. Cherchez par code ou par nom.</p>
+  
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Chercher un code (ex: 404) ou un nom (ex: Not Found)..." oninput="filterCodes()">
+  </div>
+  
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all', this)">Tous</button>
+    <button class="filter-btn" onclick="setFilter('1', this)">1xx Info</button>
+    <button class="filter-btn" onclick="setFilter('2', this)">2xx Succès</button>
+    <button class="filter-btn" onclick="setFilter('3', this)">3xx Redirect</button>
+    <button class="filter-btn" onclick="setFilter('4', this)">4xx Client</button>
+    <button class="filter-btn" onclick="setFilter('5', this)">5xx Serveur</button>
+  </div>
+  
+  <div id="results"></div>
+</div>
+
+<script>
+const CODES = {
+  '1xx': [
+    [100,'Continue','Le client peut continuer à envoyer sa requête. Utilisé pour les grandes requêtes.'],
+    [101,'Switching Protocols','Le serveur accepte de changer de protocole (ex: WebSocket upgrade).'],
+    [102,'Processing','Le serveur a reçu la requête mais traite encore (WebDAV).'],
+    [103,'Early Hints','Permet au navigateur de pré-charger des ressources pendant que la réponse finale est préparée.'],
+  ],
+  '2xx': [
+    [200,'OK','La requête a réussi. Réponse standard pour les GET réussis.'],
+    [201,'Created','La ressource a été créée. Typique pour les POST qui créent une ressource.'],
+    [202,'Accepted','La requête est acceptée mais pas encore traitée (traitement asynchrone).'],
+    [204,'No Content','Requête réussie mais pas de corps dans la réponse. Typique pour DELETE.'],
+    [206,'Partial Content','Réponse partielle à une requête Range (téléchargements en morceaux).'],
+  ],
+  '3xx': [
+    [301,'Moved Permanently','La ressource a définitivement changé d\'URL. Les moteurs de recherche mettent à jour l\'index.'],
+    [302,'Found','Redirection temporaire. L\'URL originale reste valide.'],
+    [303,'See Other','Redirection vers une autre URL, généralement après un POST (Pattern PRG).'],
+    [304,'Not Modified','La ressource n\'a pas changé depuis le dernier téléchargement (cache valide).'],
+    [307,'Temporary Redirect','Comme 302 mais la méthode HTTP (POST/GET) est préservée.'],
+    [308,'Permanent Redirect','Comme 301 mais la méthode HTTP est préservée.'],
+  ],
+  '4xx': [
+    [400,'Bad Request','La requête est malformée ou contient des paramètres invalides.'],
+    [401,'Unauthorized','Authentification requise. L\'utilisateur n\'est pas connecté.'],
+    [403,'Forbidden','Accès refusé. L\'utilisateur est authentifié mais n\'a pas les droits.'],
+    [404,'Not Found','La ressource n\'existe pas. URL incorrecte ou ressource supprimée.'],
+    [405,'Method Not Allowed','La méthode HTTP (GET, POST, etc.) n\'est pas supportée pour cette URL.'],
+    [408,'Request Timeout','La connexion a expiré avant que la requête soit complète.'],
+    [409,'Conflict','Conflit avec l\'état actuel de la ressource (ex: création d\'un email déjà existant).'],
+    [410,'Gone','La ressource a définitivement disparu (différent de 404 : on sait qu\'elle existait).'],
+    [413,'Content Too Large','Le corps de la requête est trop volumineux (upload trop grand).'],
+    [415,'Unsupported Media Type','Le Content-Type envoyé n\'est pas supporté par le serveur.'],
+    [418,'I\'m a Teapot','Easter egg RFC 2324. Le serveur refuse de préparer du café car il est une théière.'],
+    [422,'Unprocessable Entity','La syntaxe est correcte mais la sémantique pose problème (ex: email invalide).'],
+    [423,'Locked','La ressource est verrouillée (WebDAV).'],
+    [429,'Too Many Requests','Rate limiting : trop de requêtes en peu de temps. Attendre avant de réessayer.'],
+    [451,'Unavailable For Legal Reasons','La ressource est censurée pour des raisons légales (référence à Fahrenheit 451).'],
+  ],
+  '5xx': [
+    [500,'Internal Server Error','Erreur générique côté serveur. Bug non géré dans l\'application.'],
+    [501,'Not Implemented','La fonctionnalité demandée n\'est pas implémentée sur ce serveur.'],
+    [502,'Bad Gateway','Le serveur en tant que proxy a reçu une réponse invalide du serveur upstream.'],
+    [503,'Service Unavailable','Le serveur est temporairement indisponible (maintenance, surcharge).'],
+    [504,'Gateway Timeout','Le serveur proxy n\'a pas reçu de réponse du serveur upstream à temps.'],
+    [507,'Insufficient Storage','Stockage insuffisant pour terminer la requête (WebDAV).'],
+    [508,'Loop Detected','Boucle infinie détectée dans le traitement de la requête (WebDAV).'],
+  ]
+};
+
+const COLORS = {'1xx':'#60a5fa','2xx':'#34d399','3xx':'#fbbf24','4xx':'#f87171','5xx':'#e879f9'};
+let currentFilter = 'all';
+
+function renderAll() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+  
+  for (const [group, items] of Object.entries(CODES)) {
+    const filtered = items.filter(([code, name, desc]) => {
+      const matchFilter = currentFilter === 'all' || String(code).startsWith(currentFilter);
+      const matchSearch = !search || String(code).includes(search) || name.toLowerCase().includes(search) || desc.toLowerCase().includes(search);
+      return matchFilter && matchSearch;
+    });
+    if (filtered.length === 0) continue;
+    
+    const section = document.createElement('div');
+    section.className = 'section';
+    const label = {'1xx':'1xx — Informationnel','2xx':'2xx — Succès','3xx':'3xx — Redirection','4xx':'4xx — Erreur client','5xx':'5xx — Erreur serveur'};
+    section.innerHTML = `<div class="section-title" style="color:${COLORS[group]}">${label[group]}</div><div class="status-grid">${
+      filtered.map(([code, name, desc]) => `
+        <div class="status-card">
+          <div class="code" style="color:${COLORS[group]}">${code}</div>
+          <div>
+            <div class="name">${name}</div>
+            <div class="desc">${desc}</div>
+          </div>
+        </div>`).join('')
+    }</div>`;
+    results.appendChild(section);
+  }
+}
+
+function filterCodes() { renderAll(); }
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>
