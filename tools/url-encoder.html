@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL Encoder/Decoder — DevToolkit</title>
+<meta name="description" content="Encodez et décodez des URLs et paramètres en ligne. encodeURIComponent, encodeURI, query string parser. Aucune donnée envoyée.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:800px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .panel h3{font-size:14px;font-weight:700;margin-bottom:14px;}
+  textarea{width:100%;height:100px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;outline:none;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;padding:12px;resize:vertical;line-height:1.6;}
+  textarea:focus{border-color:var(--accent);}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .qs-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .qs-table th{padding:8px 12px;background:var(--surface2);color:var(--text-dim);text-align:left;font-weight:600;border-bottom:1px solid var(--border);}
+  .qs-table td{padding:8px 12px;border-bottom:1px solid var(--border);font-family:'Fira Code',monospace;}
+  .qs-table td:first-child{color:var(--accent);}
+  .qs-table tr:last-child td{border-bottom:none;}
+  .result{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'Fira Code',monospace;font-size:13px;word-break:break-all;line-height:1.6;cursor:pointer;color:var(--accent);}
+  .result:hover{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">URL Encoder</a>
+</nav>
+
+<div class="container">
+  <h1>🔗 URL Encoder / Decoder</h1>
+  <p class="subtitle">Encodez ou décodez des URLs, query strings et paramètres. Cliquez sur un résultat pour copier.</p>
+
+  <div class="panel">
+    <h3>Encoder / Décoder</h3>
+    <div class="toolbar">
+      <button class="primary" id="mode-encode" onclick="setMode('encode')">Encoder →</button>
+      <button id="mode-decode" onclick="setMode('decode')">← Décoder</button>
+      <select id="encode-type" style="padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;font-size:13px;" onchange="convert()">
+        <option value="component">encodeURIComponent (paramètres)</option>
+        <option value="uri">encodeURI (URL complète)</option>
+      </select>
+    </div>
+    <textarea id="url-input" placeholder="Entrez votre texte ou URL..." oninput="convert()"></textarea>
+    <div style="margin:10px 0;display:flex;gap:8px;">
+      <button onclick="convert()">Convertir</button>
+      <button onclick="swap()">⇄ Inverser</button>
+      <button onclick="document.getElementById('url-input').value='';document.getElementById('url-output').textContent=''">🗑 Vider</button>
+    </div>
+    <div class="result" id="url-output" onclick="copyResult(this)" title="Cliquez pour copier"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Query String Parser</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Collez une URL complète pour extraire et visualiser les paramètres.</p>
+    <textarea id="qs-input" placeholder="https://example.com/search?q=hello+world&lang=fr&page=2&sort=date" oninput="parseQS()" rows="3" style="height:70px;"></textarea>
+    <div id="qs-table-container" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Exemples courants</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div onclick="loadExample('https://example.com/search?q=bonjour monde&lang=fr éàü')" style="cursor:pointer;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:Fira Code,monospace;color:var(--text-dim)">
+        URL avec espaces et accents → encoder
+      </div>
+      <div onclick="loadExample('https%3A%2F%2Fexample.com%2Fpath%3Fq%3Dhello%20world')" style="cursor:pointer;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:Fira Code,monospace;color:var(--text-dim)">
+        URL encodée → décoder
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let mode = 'encode';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('mode-encode').style.background = m==='encode'?'var(--accent)':'var(--surface)';
+  document.getElementById('mode-encode').style.borderColor = m==='encode'?'var(--accent)':'var(--border)';
+  document.getElementById('mode-decode').style.background = m==='decode'?'var(--accent)':'var(--surface)';
+  document.getElementById('mode-decode').style.borderColor = m==='decode'?'var(--accent)':'var(--border)';
+  convert();
+}
+
+function convert() {
+  const input = document.getElementById('url-input').value;
+  const type = document.getElementById('encode-type').value;
+  const out = document.getElementById('url-output');
+  if (!input) { out.textContent = ''; return; }
+  try {
+    let result;
+    if (mode === 'encode') {
+      result = type === 'component' ? encodeURIComponent(input) : encodeURI(input);
+    } else {
+      result = type === 'component' ? decodeURIComponent(input.replace(/\+/g, ' ')) : decodeURI(input);
+    }
+    out.textContent = result;
+  } catch(e) {
+    out.textContent = '⚠️ Erreur: ' + e.message;
+  }
+}
+
+function swap() {
+  const input = document.getElementById('url-input');
+  const out = document.getElementById('url-output').textContent;
+  if (!out) return;
+  input.value = out;
+  setMode(mode === 'encode' ? 'decode' : 'encode');
+}
+
+function copyResult(el) {
+  if (!el.textContent) return;
+  navigator.clipboard.writeText(el.textContent);
+  const orig = el.style.borderColor;
+  el.style.borderColor = 'var(--success)';
+  setTimeout(() => el.style.borderColor = orig, 800);
+}
+
+function parseQS() {
+  const input = document.getElementById('qs-input').value.trim();
+  if (!input) { document.getElementById('qs-table-container').innerHTML = ''; return; }
+
+  let url;
+  try {
+    url = new URL(input.startsWith('http') ? input : 'https://example.com?' + input.replace(/^\?/,''));
+  } catch {
+    try {
+      url = new URL('https://example.com?' + input);
+    } catch { return; }
+  }
+
+  const params = [...url.searchParams.entries()];
+  if (!params.length) {
+    document.getElementById('qs-table-container').innerHTML = '<p style="font-size:13px;color:var(--text-dim)">Aucun paramètre trouvé.</p>';
+    return;
+  }
+
+  let html = `<div style="margin-bottom:8px;font-size:12px;color:var(--text-dim)">
+    Base URL: <span style="color:var(--accent);font-family:Fira Code,monospace">${url.origin}${url.pathname}</span>
+  </div>`;
+  html += '<table class="qs-table"><tr><th>Paramètre</th><th>Valeur (décodée)</th></tr>';
+  for (const [k, v] of params) {
+    html += `<tr><td>${k}</td><td>${v}</td></tr>`;
+  }
+  html += '</table>';
+  document.getElementById('qs-table-container').innerHTML = html;
+}
+
+function loadExample(ex) {
+  document.getElementById('url-input').value = ex;
+  if (ex.includes('%')) setMode('decode');
+  else setMode('encode');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Generator SHA-256 MD5 — DevToolkit</title>
+<meta name="description" content="Calculez les hash SHA-256, SHA-512, SHA-1 de n'importe quel texte ou fichier. Utilise l'API Web Crypto — aucune donnée envoyée au serveur.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:800px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;}
+  textarea{width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;outline:none;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;padding:14px;resize:vertical;line-height:1.6;}
+  textarea:focus{border-color:var(--accent);}
+  button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+  .hash-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+  .hash-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .hash-item .algo{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+  .hash-item .value{font-family:'Fira Code',monospace;font-size:12px;word-break:break-all;color:var(--accent);cursor:pointer;line-height:1.6;}
+  .hash-item .value:hover{text-decoration:underline;}
+  .copy-all-btn{font-size:12px;padding:3px 10px;}
+  .file-drop{border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px;}
+  .file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:rgba(99,102,241,0.05);}
+  .file-drop .icon{font-size:32px;margin-bottom:8px;}
+  .file-drop p{color:var(--text-dim);font-size:14px;}
+  .file-info{font-size:13px;color:var(--success);margin-top:8px;}
+  .compare-result{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;display:none;}
+  .match{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);}
+  .nomatch{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--error);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">Hash Generator</a>
+</nav>
+
+<div class="container">
+  <h1>🔒 Hash Generator</h1>
+  <p class="subtitle">Calculez SHA-256, SHA-512, SHA-1 de texte ou fichier via l'API Web Crypto — tout reste dans votre navigateur.</p>
+
+  <div class="panel">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Texte</h3>
+    <textarea id="text-input" placeholder="Entrez le texte à hasher..." oninput="hashText()"></textarea>
+    <div class="toolbar">
+      <button class="primary" onclick="hashText()">🔒 Calculer les hash</button>
+      <button onclick="document.getElementById('text-input').value='';clearResults()">🗑 Vider</button>
+      <button onclick="loadSample()">📄 Exemple</button>
+    </div>
+    <div class="hash-list" id="text-hash-results"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Fichier</h3>
+    <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+      <div class="icon">📁</div>
+      <p>Glissez un fichier ici ou cliquez pour choisir</p>
+      <p style="font-size:12px;margin-top:4px;">N'importe quel fichier — rien n'est uploadé</p>
+    </div>
+    <input type="file" id="file-input" style="display:none" onchange="hashFile(this.files[0])">
+    <div class="file-info" id="file-info"></div>
+    <div class="hash-list" id="file-hash-results"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Vérifier un hash</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Comparez un hash connu avec le hash calculé du texte ci-dessus.</p>
+    <input type="text" id="compare-input" placeholder="Collez le hash à vérifier..." style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none;margin-bottom:8px;">
+    <button onclick="compareHash()">🔍 Vérifier</button>
+    <div class="compare-result" id="compare-result"></div>
+  </div>
+</div>
+
+<script>
+const ALGOS = ['SHA-256', 'SHA-512', 'SHA-1'];
+
+async function computeHash(algo, data) {
+  const buf = typeof data === 'string'
+    ? new TextEncoder().encode(data)
+    : new Uint8Array(data);
+  const hashBuf = await crypto.subtle.digest(algo, buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function renderHashes(containerId, data) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '<div style="color:var(--text-dim);font-size:13px">Calcul en cours...</div>';
+
+  const results = await Promise.all(ALGOS.map(a => computeHash(a, data).then(h => [a, h])));
+
+  container.innerHTML = results.map(([algo, hash]) => `
+    <div class="hash-item">
+      <div class="algo">
+        <span>${algo}</span>
+        <button class="copy-all-btn" onclick="copyHash('${hash}',this)">📋 Copier</button>
+      </div>
+      <div class="value" onclick="copyHash('${hash}',null)" title="Cliquez pour copier">${hash}</div>
+    </div>
+  `).join('');
+
+  // Store hashes for comparison
+  window._lastHashes = Object.fromEntries(results);
+}
+
+function copyHash(val, btn) {
+  navigator.clipboard.writeText(val);
+  if (btn) { const orig=btn.textContent; btn.textContent='✅'; setTimeout(()=>btn.textContent=orig,1200); }
+}
+
+let textTimer;
+function hashText() {
+  clearTimeout(textTimer);
+  textTimer = setTimeout(() => {
+    const text = document.getElementById('text-input').value;
+    if (!text) { clearResults(); return; }
+    renderHashes('text-hash-results', text);
+  }, 200);
+}
+
+function clearResults() {
+  document.getElementById('text-hash-results').innerHTML = '';
+  window._lastHashes = {};
+}
+
+async function hashFile(file) {
+  if (!file) return;
+  document.getElementById('file-info').textContent = `📄 ${file.name} · ${(file.size/1024).toFixed(1)} KB`;
+  const buf = await file.arrayBuffer();
+  await renderHashes('file-hash-results', buf);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('file-drop').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) hashFile(file);
+}
+
+function compareHash() {
+  const input = document.getElementById('compare-input').value.trim().toLowerCase();
+  const result = document.getElementById('compare-result');
+  if (!input || !window._lastHashes) return;
+
+  let found = null;
+  for (const [algo, hash] of Object.entries(window._lastHashes || {})) {
+    if (hash === input) { found = algo; break; }
+  }
+
+  result.style.display = 'block';
+  if (found) {
+    result.className = 'compare-result match';
+    result.textContent = `✅ Hash valide ! Correspond au ${found} du texte ci-dessus.`;
+  } else {
+    result.className = 'compare-result nomatch';
+    result.textContent = '❌ Hash différent — le contenu ne correspond pas.';
+  }
+}
+
+function loadSample() {
+  document.getElementById('text-input').value = 'Hello, DevToolkit! Ce texte va être hashé avec SHA-256, SHA-512 et SHA-1.';
+  hashText();
+}
+</script>
+</body>
+</html>
