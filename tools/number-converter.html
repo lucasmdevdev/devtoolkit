@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convertisseur de bases numériques — Hex Bin Oct Dec — DevToolkit</title>
+<meta name="description" content="Convertissez des nombres entre les bases hexadécimale, binaire, octale et décimale. Calcul bit par bit, complément à 2, représentation IEEE 754.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:800px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .base-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .base-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .base-item label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .base-name{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);}
+  .base-radix{font-size:11px;color:var(--accent);background:rgba(99,102,241,0.15);padding:2px 8px;border-radius:4px;}
+  .base-item input{width:100%;background:transparent;border:none;outline:none;color:var(--accent);font-family:'Fira Code',monospace;font-size:15px;padding:0;}
+  .base-item .copy-btn{float:right;font-size:11px;padding:2px 8px;background:var(--surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-dim);transition:all 0.15s;margin-top:8px;}
+  .base-item .copy-btn:hover{background:var(--accent);border-color:var(--accent);color:white;}
+  .error{color:var(--error);font-size:12px;margin-top:4px;display:none;}
+  .bit-display{font-family:'Fira Code',monospace;font-size:13px;line-height:2;word-break:break-all;}
+  .bit-0{color:var(--text-dim);}
+  .bit-1{color:var(--accent);}
+  .bit-group{margin-right:8px;}
+  .presets{display:flex;gap:8px;flex-wrap:wrap;}
+  .preset{padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-family:'Fira Code',monospace;color:var(--text-dim);transition:all 0.15s;}
+  .preset:hover{border-color:var(--accent);color:var(--accent);}
+  .ops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+  .op-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:12px;}
+  .op-item .op-label{color:var(--text-dim);margin-bottom:4px;}
+  .op-item .op-value{font-family:'Fira Code',monospace;color:var(--accent);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">Number Converter</a>
+</nav>
+
+<div class="container">
+  <h1>🔢 Convertisseur de bases numériques</h1>
+  <p class="subtitle">Convertissez entre décimal, hexadécimal, binaire et octal. Modifiez n'importe quelle valeur pour les autres se mettent à jour.</p>
+
+  <div class="panel">
+    <div class="base-grid">
+      <div class="base-item">
+        <label><span class="base-name">Décimal</span><span class="base-radix">Base 10</span></label>
+        <input type="text" id="dec" placeholder="255" oninput="convert('dec',this.value)" onclick="this.select()">
+        <button class="copy-btn" onclick="copyVal('dec')">📋 Copier</button>
+        <div class="error" id="dec-err">Uniquement des chiffres 0-9</div>
+      </div>
+      <div class="base-item">
+        <label><span class="base-name">Hexadécimal</span><span class="base-radix">Base 16</span></label>
+        <input type="text" id="hex" placeholder="FF" oninput="convert('hex',this.value)" onclick="this.select()">
+        <button class="copy-btn" onclick="copyVal('hex')">📋 Copier</button>
+        <div class="error" id="hex-err">Uniquement 0-9, A-F</div>
+      </div>
+      <div class="base-item">
+        <label><span class="base-name">Binaire</span><span class="base-radix">Base 2</span></label>
+        <input type="text" id="bin" placeholder="11111111" oninput="convert('bin',this.value)" onclick="this.select()">
+        <button class="copy-btn" onclick="copyVal('bin')">📋 Copier</button>
+        <div class="error" id="bin-err">Uniquement 0 et 1</div>
+      </div>
+      <div class="base-item">
+        <label><span class="base-name">Octal</span><span class="base-radix">Base 8</span></label>
+        <input type="text" id="oct" placeholder="377" oninput="convert('oct',this.value)" onclick="this.select()">
+        <button class="copy-btn" onclick="copyVal('oct')">📋 Copier</button>
+        <div class="error" id="oct-err">Uniquement 0-7</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="bit-panel" style="display:none">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Représentation binaire (32 bits)</h3>
+    <div class="bit-display" id="bit-display"></div>
+  </div>
+
+  <div class="panel" id="ops-panel" style="display:none">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Informations</h3>
+    <div class="ops-grid" id="ops-grid"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Valeurs courantes</h3>
+    <div class="presets">
+      <div class="preset" onclick="convert('dec','0')">0</div>
+      <div class="preset" onclick="convert('dec','1')">1</div>
+      <div class="preset" onclick="convert('dec','8')">8</div>
+      <div class="preset" onclick="convert('dec','16')">16</div>
+      <div class="preset" onclick="convert('dec','32')">32</div>
+      <div class="preset" onclick="convert('dec','64')">64</div>
+      <div class="preset" onclick="convert('dec','127')">127</div>
+      <div class="preset" onclick="convert('dec','128')">128</div>
+      <div class="preset" onclick="convert('dec','255')">255</div>
+      <div class="preset" onclick="convert('dec','256')">256</div>
+      <div class="preset" onclick="convert('dec','1024')">1024</div>
+      <div class="preset" onclick="convert('dec','65535')">65535</div>
+      <div class="preset" onclick="convert('hex','DEADBEEF')">DEADBEEF</div>
+      <div class="preset" onclick="convert('hex','FF')">0xFF</div>
+      <div class="preset" onclick="convert('hex','7FFFFFFF')">INT_MAX</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RADIX = {dec: 10, hex: 16, bin: 2, oct: 8};
+const VALID = {dec: /^-?\d+$/, hex: /^[0-9a-fA-F]+$/, bin: /^[01]+$/, oct: /^[0-7]+$/};
+let updating = false;
+
+function convert(from, raw) {
+  if (updating) return;
+  updating = true;
+
+  const val = raw.trim().toUpperCase().replace(/^0X/i,'');
+
+  // Validate
+  document.getElementById(from + '-err').style.display = 'none';
+  if (val && !VALID[from].test(val.replace(/^-/,''))) {
+    document.getElementById(from + '-err').style.display = 'block';
+    updating = false;
+    return;
+  }
+
+  if (!val) {
+    ['dec','hex','bin','oct'].filter(b=>b!==from).forEach(b => {
+      document.getElementById(b).value = '';
+    });
+    document.getElementById('bit-panel').style.display = 'none';
+    document.getElementById('ops-panel').style.display = 'none';
+    updating = false;
+    return;
+  }
+
+  const n = parseInt(val, RADIX[from]);
+  if (isNaN(n)) { updating = false; return; }
+
+  if (from !== 'dec') document.getElementById('dec').value = n;
+  if (from !== 'hex') document.getElementById('hex').value = Math.abs(n).toString(16).toUpperCase();
+  if (from !== 'bin') document.getElementById('bin').value = (n >>> 0).toString(2);
+  if (from !== 'oct') document.getElementById('oct').value = (n >>> 0).toString(8);
+
+  // Bit display
+  const bits = (n >>> 0).toString(2).padStart(32, '0');
+  let html = '';
+  for (let i = 0; i < 32; i++) {
+    if (i % 8 === 0 && i > 0) html += ' ';
+    html += `<span class="bit-${bits[i]}">${bits[i]}</span>`;
+  }
+  document.getElementById('bit-display').innerHTML = html;
+  document.getElementById('bit-panel').style.display = 'block';
+
+  // Operations
+  const unsigned = n >>> 0;
+  const ops = [
+    ['Valeur signée (32-bit)', n >= 2147483648 ? n - 4294967296 : n],
+    ['Valeur non signée', unsigned],
+    ['NOT (~)', ~n >>> 0 + ' (0x' + (~n >>> 0).toString(16).toUpperCase() + ')'],
+    ['Bytes', Math.ceil(bits.replace(/^0+/,'').length / 8) || 1],
+    ['Bits significatifs', bits.replace(/^0+/,'').length || 1],
+    ['Puissance de 2 ?', (n & (n-1)) === 0 && n > 0 ? 'Oui (2^' + Math.log2(n) + ')' : 'Non'],
+  ];
+  document.getElementById('ops-grid').innerHTML = ops.map(([l,v]) =>
+    `<div class="op-item"><div class="op-label">${l}</div><div class="op-value">${v}</div></div>`
+  ).join('');
+  document.getElementById('ops-panel').style.display = 'block';
+
+  updating = false;
+}
+
+function copyVal(base) {
+  const val = document.getElementById(base).value;
+  if (val) {
+    navigator.clipboard.writeText(val);
+    const btn = document.querySelector(`.base-item:has(#${base}) .copy-btn`);
+    if (btn) { btn.textContent='✅'; setTimeout(()=>btn.textContent='📋 Copier',1200); }
+  }
+}
+
+// Init
+convert('dec', '255');
+</script>
+</body>
+</html>
