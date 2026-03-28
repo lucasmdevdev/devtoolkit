@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Preview & Éditeur — DevToolkit</title>
+<meta name="description" content="Éditeur Markdown avec prévisualisation en temps réel. Export HTML, mode plein écran, thème dark/light. Supporte GitHub Flavored Markdown.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;}
+  button{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.active{background:var(--accent);border-color:var(--accent);}
+  .editor-layout{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;}
+  .editor-pane{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);}
+  .pane-header{padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim);font-weight:600;}
+  textarea{flex:1;background:var(--surface);border:none;outline:none;color:var(--text);font-family:'Fira Code','Consolas',monospace;font-size:13px;padding:16px;resize:none;line-height:1.7;width:100%;}
+  .preview-pane{overflow-y:auto;padding:24px;background:var(--surface);}
+  /* Markdown styles */
+  .md h1,.md h2,.md h3,.md h4{margin:1.2em 0 0.5em;line-height:1.3;}
+  .md h1{font-size:1.8em;border-bottom:1px solid var(--border);padding-bottom:8px;}
+  .md h2{font-size:1.4em;border-bottom:1px solid var(--border);padding-bottom:6px;}
+  .md h3{font-size:1.2em;}
+  .md p{margin-bottom:1em;line-height:1.7;}
+  .md ul,.md ol{margin-bottom:1em;padding-left:24px;}
+  .md li{margin-bottom:4px;line-height:1.6;}
+  .md code{background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;font-size:0.9em;color:#86efac;}
+  .md pre{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;margin-bottom:1em;}
+  .md pre code{background:none;padding:0;color:var(--text);}
+  .md blockquote{border-left:3px solid var(--accent);padding:8px 16px;margin:1em 0;background:rgba(99,102,241,0.05);color:var(--text-dim);}
+  .md a{color:var(--accent);text-decoration:none;}
+  .md a:hover{text-decoration:underline;}
+  .md table{border-collapse:collapse;width:100%;margin-bottom:1em;}
+  .md th,.md td{padding:8px 12px;border:1px solid var(--border);}
+  .md th{background:var(--surface2);font-weight:600;}
+  .md img{max-width:100%;border-radius:6px;}
+  .md hr{border:none;border-top:1px solid var(--border);margin:1.5em 0;}
+  .md strong{font-weight:700;}
+  .md em{font-style:italic;color:var(--text-dim);}
+  .word-count{margin-left:auto;font-size:12px;color:var(--text-dim);}
+  @media(max-width:600px){.editor-layout{grid-template-columns:1fr;}.preview-pane{display:none;}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">Markdown Preview</a>
+</nav>
+
+<div class="toolbar">
+  <button onclick="ins('**', '**')"><b>B</b></button>
+  <button onclick="ins('*', '*')"><i>I</i></button>
+  <button onclick="ins('`', '`')">Code</button>
+  <button onclick="ins('\n```\n', '\n```')">Bloc</button>
+  <button onclick="insLine('## ')">H2</button>
+  <button onclick="insLine('### ')">H3</button>
+  <button onclick="insLine('> ')">Quote</button>
+  <button onclick="insLine('- ')">Liste</button>
+  <button onclick="insLink()">Lien</button>
+  <button onclick="copyHTML()">📋 HTML</button>
+  <button onclick="loadSample()">📄 Exemple</button>
+  <button onclick="clearEditor()">🗑</button>
+  <span class="word-count" id="word-count">0 mots</span>
+</div>
+
+<div class="editor-layout">
+  <div class="editor-pane">
+    <div class="pane-header">✏️ Markdown</div>
+    <textarea id="md-input" placeholder="# Titre&#10;&#10;Écrivez votre **Markdown** ici..." oninput="render()"></textarea>
+  </div>
+  <div>
+    <div class="pane-header" style="padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim);font-weight:600;">👁️ Prévisualisation</div>
+    <div class="preview-pane">
+      <div class="md" id="preview"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Minimal Markdown parser
+function md(src) {
+  if (!src) return '';
+  let html = src;
+
+  // Escape HTML
+  html = html.replace(/&(?!amp;|lt;|gt;|quot;|#)/g,'&amp;');
+
+  // Code blocks
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;').trim()}</code></pre>`);
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headers
+  html = html.replace(/^###### (.+)$/gm,'<h6>$1</h6>');
+  html = html.replace(/^##### (.+)$/gm,'<h5>$1</h5>');
+  html = html.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
+  html = html.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+
+  // HR
+  html = html.replace(/^---+$/gm,'<hr>');
+
+  // Blockquotes
+  html = html.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+
+  // Bold/italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  html = html.replace(/__(.+?)__/g,'<strong>$1</strong>');
+  html = html.replace(/_(.+?)_/g,'<em>$1</em>');
+
+  // Links and images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1">');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Strikethrough
+  html = html.replace(/~~(.+?)~~/g,'<del>$1</del>');
+
+  // Tables
+  html = html.replace(/^\|(.+)\|\s*$/gm, (_, row) => {
+    const cells = row.split('|').map(c=>c.trim());
+    return '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+  });
+  html = html.replace(/(<tr>.*<\/tr>\n?)+/g, m =>
+    '<table>' + m.replace(/<tr>(<td>[^<]*<\/td>)*<\/tr>/, r=>r.replace(/td/g,'th')) + '</table>');
+
+  // Ordered lists
+  html = html.replace(/((?:^\d+\. .+\n?)+)/gm, m => {
+    const items = m.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /,'')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Unordered lists
+  html = html.replace(/((?:^[-*+] .+\n?)+)/gm, m => {
+    const items = m.trim().split('\n').map(l => `<li>${l.replace(/^[-*+] /,'')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Paragraphs
+  html = html.replace(/\n{2,}/g, '\n</p><p>');
+  html = '<p>' + html + '</p>';
+  html = html.replace(/<p><(h[1-6]|pre|ul|ol|table|blockquote|hr)/g,'<$1');
+  html = html.replace(/<\/(h[1-6]|pre|ul|ol|table|blockquote|hr)><\/p>/g,'</$1>');
+  html = html.replace(/<p><\/p>/g,'');
+
+  return html;
+}
+
+function render() {
+  const input = document.getElementById('md-input').value;
+  document.getElementById('preview').innerHTML = md(input);
+
+  const words = input.trim() ? input.trim().split(/\s+/).length : 0;
+  const chars = input.length;
+  document.getElementById('word-count').textContent = `${words} mots · ${chars} caractères`;
+}
+
+const textarea = document.getElementById('md-input');
+
+function ins(before, after) {
+  const start = textarea.selectionStart, end = textarea.selectionEnd;
+  const selected = textarea.value.slice(start, end);
+  textarea.value = textarea.value.slice(0, start) + before + selected + after + textarea.value.slice(end);
+  textarea.selectionStart = start + before.length;
+  textarea.selectionEnd = end + before.length;
+  textarea.focus();
+  render();
+}
+
+function insLine(prefix) {
+  const start = textarea.selectionStart;
+  const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+  textarea.value = textarea.value.slice(0, lineStart) + prefix + textarea.value.slice(lineStart);
+  textarea.selectionStart = textarea.selectionEnd = start + prefix.length;
+  textarea.focus();
+  render();
+}
+
+function insLink() {
+  const url = prompt('URL du lien:') || 'https://example.com';
+  const text = prompt('Texte du lien:') || 'Lien';
+  ins(`[${text}](${url})`, '');
+}
+
+function copyHTML() {
+  const html = document.getElementById('preview').innerHTML;
+  navigator.clipboard.writeText(html).then(() => {
+    const btn = document.querySelector('button[onclick="copyHTML()"]');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = '📋 HTML', 1500);
+  });
+}
+
+function clearEditor() {
+  textarea.value = '';
+  render();
+}
+
+function loadSample() {
+  textarea.value = `# Mon Article Markdown
+
+Bienvenue dans l'éditeur **Markdown** de DevToolkit !
+
+## Fonctionnalités
+
+- Prévisualisation en temps réel
+- Export HTML d'un clic
+- Formatage rapide via la barre d'outils
+- Compatible GitHub Flavored Markdown
+
+## Code
+
+Voici un exemple de code \`inline\` et un bloc :
+
+\`\`\`javascript
+const greet = (name) => {
+  console.log(\`Bonjour, \${name} !\`);
+};
+greet('DevToolkit');
+\`\`\`
+
+## Tableau
+
+| Outil | Usage | Note |
+| --- | --- | --- |
+| JSON Formatter | Valider du JSON | ⭐⭐⭐⭐⭐ |
+| Regex Tester | Tester des patterns | ⭐⭐⭐⭐⭐ |
+| JWT Decoder | Inspecter les tokens | ⭐⭐⭐⭐ |
+
+> **Astuce** : Utilisez \`Cmd+K\` dans Cursor pour éditer du code avec l'IA.
+
+---
+
+Fait avec ❤️ par [DevToolkit](https://lucasmdevdev.github.io/devtoolkit/)`;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
