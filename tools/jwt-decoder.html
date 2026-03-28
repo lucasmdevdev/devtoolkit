@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWT Decoder — DevToolkit</title>
+<meta name="description" content="Décodez et inspectez les tokens JWT (JSON Web Tokens) en ligne. Header, payload, expiration, signature. 100% local, vos tokens ne quittent pas votre navigateur.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444;--warning:#f59e0b;--key:#7dd3fc;--str:#86efac;--num:#fbbf24;--bool:#c084fc;--null:#f87171;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:900px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+  .panel-header{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text-dim);display:flex;align-items:center;gap:8px;}
+  .panel-header .badge{margin-left:auto;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+  .badge-header{background:rgba(99,102,241,0.2);color:#a5b4fc;}
+  .badge-payload{background:rgba(16,185,129,0.2);color:#6ee7b7;}
+  .badge-sig{background:rgba(245,158,11,0.2);color:#fcd34d;}
+  textarea{width:100%;height:100px;background:transparent;border:none;outline:none;color:var(--text);font-family:'Fira Code','Consolas',monospace;font-size:12px;padding:16px;resize:vertical;line-height:1.6;}
+  .decoded{padding:16px;font-family:'Fira Code','Consolas',monospace;font-size:13px;line-height:1.6;}
+  .json-key{color:var(--key);}
+  .json-str{color:var(--str);}
+  .json-num{color:var(--num);}
+  .json-bool{color:var(--bool);}
+  .json-null{color:var(--null);}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .status-banner{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+  .status-valid{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);}
+  .status-expired{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--warning);}
+  .status-invalid{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--error);}
+  .token-parts{display:flex;flex-wrap:wrap;gap:4px;padding:16px;font-family:'Fira Code','Consolas',monospace;font-size:12px;word-break:break-all;line-height:2;}
+  .part-header{color:#a5b4fc;}
+  .part-payload{color:#6ee7b7;}
+  .part-sig{color:#fcd34d;}
+  .claims-table{width:100%;font-size:13px;border-collapse:collapse;}
+  .claims-table td{padding:8px 12px;border-bottom:1px solid var(--border);}
+  .claims-table td:first-child{color:var(--text-dim);width:120px;font-weight:600;}
+  .claims-table tr:last-child td{border-bottom:none;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">JWT Decoder</a>
+</nav>
+
+<div class="container">
+  <h1>🎫 JWT Decoder</h1>
+  <p class="subtitle">Décodez et inspectez les tokens JWT — header, payload, claims standards, expiration. Vos tokens ne quittent jamais votre navigateur.</p>
+
+  <div class="panel">
+    <div class="panel-header">📥 Token JWT</div>
+    <textarea id="jwt-input" placeholder="Collez votre JWT ici...&#10;&#10;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.xxx" oninput="decode()"></textarea>
+  </div>
+
+  <div class="toolbar">
+    <button class="primary" onclick="decode()">🔓 Décoder</button>
+    <button onclick="loadSample()">📄 Exemple</button>
+    <button onclick="clearAll()">🗑 Vider</button>
+  </div>
+
+  <div class="status-banner" id="status-banner"></div>
+
+  <div id="result" style="display:none">
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header">Visualisation colorée <span class="badge badge-header">header</span></div>
+      <div class="token-parts" id="token-visual"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header">Header <span class="badge badge-header">HEADER</span></div>
+      <div class="decoded" id="header-out"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header">Payload <span class="badge badge-payload">PAYLOAD</span></div>
+      <div class="decoded" id="payload-out"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header">Claims standards</div>
+      <table class="claims-table" id="claims-table"></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Signature <span class="badge badge-sig">SIGNATURE</span></div>
+      <div class="decoded" id="sig-out" style="word-break:break-all;color:var(--warning);opacity:0.8"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+      if(/^"/.test(m)) return m.endsWith(':') ? `<span class="json-key">${m}</span>` : `<span class="json-str">${m}</span>`;
+      if(/true|false/.test(m)) return `<span class="json-bool">${m}</span>`;
+      if(/null/.test(m)) return `<span class="json-null">${m}</span>`;
+      return `<span class="json-num">${m}</span>`;
+    });
+}
+
+function b64Decode(str) {
+  str = str.replace(/-/g,'+').replace(/_/g,'/');
+  while(str.length%4) str+='=';
+  return decodeURIComponent(escape(atob(str)));
+}
+
+function showBanner(type, msg) {
+  const el = document.getElementById('status-banner');
+  el.className = 'status-banner status-' + type;
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+function formatTime(ts) {
+  return new Date(ts * 1000).toLocaleString('fr-FR', {timeZone:'UTC'}) + ' UTC';
+}
+
+function decode() {
+  const token = document.getElementById('jwt-input').value.trim();
+  if (!token) { document.getElementById('result').style.display='none'; document.getElementById('status-banner').style.display='none'; return; }
+
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    showBanner('invalid', '⚠️ Format invalide — un JWT doit avoir 3 parties séparées par des points.');
+    document.getElementById('result').style.display = 'none';
+    return;
+  }
+
+  try {
+    const header = JSON.parse(b64Decode(parts[0]));
+    const payload = JSON.parse(b64Decode(parts[1]));
+
+    // Token visual
+    document.getElementById('token-visual').innerHTML =
+      `<span class="part-header">${parts[0]}</span><span style="color:var(--text-dim)">.</span>` +
+      `<span class="part-payload">${parts[1]}</span><span style="color:var(--text-dim)">.</span>` +
+      `<span class="part-sig">${parts[2]}</span>`;
+
+    document.getElementById('header-out').innerHTML = syntaxHighlight(JSON.stringify(header, null, 2));
+    document.getElementById('payload-out').innerHTML = syntaxHighlight(JSON.stringify(payload, null, 2));
+    document.getElementById('sig-out').textContent = parts[2];
+
+    // Claims table
+    const now = Math.floor(Date.now() / 1000);
+    const claimsMap = {
+      sub: ['Subject (utilisateur)', v => v],
+      iss: ['Issuer (émetteur)', v => v],
+      aud: ['Audience', v => Array.isArray(v) ? v.join(', ') : v],
+      iat: ['Issued At (créé)', v => formatTime(v)],
+      exp: ['Expiration', v => {
+        const expired = now > v;
+        return formatTime(v) + (expired ? ' <span style="color:var(--error)">⚠️ EXPIRÉ</span>' : ' <span style="color:var(--success)">✓ Valide</span>');
+      }],
+      nbf: ['Not Before', v => formatTime(v)],
+      jti: ['JWT ID', v => v],
+    };
+
+    let claimsHtml = '';
+    for (const [key, [label, fmt]] of Object.entries(claimsMap)) {
+      if (payload[key] !== undefined) {
+        claimsHtml += `<tr><td>${label}</td><td>${fmt(payload[key])}</td></tr>`;
+      }
+    }
+    // Custom claims
+    for (const [key, val] of Object.entries(payload)) {
+      if (!claimsMap[key]) {
+        claimsHtml += `<tr><td><span style="color:var(--accent)">${key}</span></td><td>${JSON.stringify(val)}</td></tr>`;
+      }
+    }
+    document.getElementById('claims-table').innerHTML = claimsHtml;
+
+    // Status
+    if (payload.exp) {
+      if (now > payload.exp) {
+        showBanner('expired', `⏰ Token expiré depuis ${formatTime(payload.exp)}`);
+      } else {
+        const remaining = payload.exp - now;
+        const h = Math.floor(remaining/3600), m = Math.floor((remaining%3600)/60);
+        showBanner('valid', `✅ Token valide — expire dans ${h}h ${m}min`);
+      }
+    } else {
+      showBanner('valid', '✅ JWT décodé avec succès — aucune expiration définie');
+    }
+
+    document.getElementById('result').style.display = 'block';
+  } catch (e) {
+    showBanner('invalid', '⚠️ Erreur de décodage : ' + e.message);
+    document.getElementById('result').style.display = 'none';
+  }
+}
+
+function loadSample() {
+  // Sample JWT (non-sensitive demo token)
+  document.getElementById('jwt-input').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsIm5hbWUiOiJMdWNhcyBNIiwiZW1haWwiOiJsdWNhc0BleGFtcGxlLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcxMTY0ODAwMCwiZXhwIjo5OTk5OTk5OTk5fQ.demo_signature_not_verified';
+  decode();
+}
+
+function clearAll() {
+  document.getElementById('jwt-input').value = '';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('status-banner').style.display = 'none';
+}
+</script>
+</body>
+</html>

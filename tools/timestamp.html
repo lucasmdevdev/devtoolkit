@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timestamp Converter — DevToolkit</title>
+<meta name="description" content="Convertissez les timestamps Unix en dates lisibles et vice-versa. Fuseau horaire local et UTC. Timestamp actuel en temps réel.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:800px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .now-banner{background:var(--surface);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .now-banner .label{color:var(--text-dim);font-size:13px;}
+  .now-ts{font-family:'Fira Code',monospace;font-size:28px;font-weight:700;color:var(--accent);}
+  .now-date{font-size:14px;color:var(--text-dim);}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;}
+  .panel h3{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text);}
+  .input-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  input[type=text],input[type=number]{
+    flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);font-family:'Fira Code',monospace;font-size:15px;
+    outline:none;min-width:200px;transition:border-color 0.2s;
+  }
+  input:focus{border-color:var(--accent);}
+  button{padding:10px 18px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;white-space:nowrap;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:16px;}
+  .result-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .result-item .r-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .result-item .r-value{font-family:'Fira Code',monospace;font-size:14px;cursor:pointer;transition:color 0.15s;}
+  .result-item .r-value:hover{color:var(--accent);}
+  .relative{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:12px 16px;margin-top:16px;font-size:14px;color:var(--accent);}
+  .error{color:var(--error);font-size:13px;margin-top:8px;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">Timestamp</a>
+</nav>
+
+<div class="container">
+  <h1>⏱️ Timestamp Converter</h1>
+  <p class="subtitle">Convertissez les timestamps Unix en dates et vice-versa. Cliquez sur un résultat pour le copier.</p>
+
+  <div class="now-banner">
+    <div>
+      <div class="label">Timestamp actuel</div>
+      <div class="now-ts" id="now-ts">--</div>
+    </div>
+    <div>
+      <div class="label">Date locale</div>
+      <div class="now-date" id="now-local">--</div>
+    </div>
+    <div>
+      <div class="label">UTC</div>
+      <div class="now-date" id="now-utc">--</div>
+    </div>
+    <button onclick="useNow()">Utiliser →</button>
+  </div>
+
+  <div class="panel">
+    <h3>Timestamp Unix → Date</h3>
+    <div class="input-row">
+      <input type="number" id="ts-input" placeholder="1711670400" oninput="convertTS()">
+      <button class="primary" onclick="convertTS()">Convertir →</button>
+      <button onclick="useNow()">Maintenant</button>
+    </div>
+    <p class="error" id="ts-error"></p>
+    <div id="ts-result"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Date → Timestamp Unix</h3>
+    <div class="input-row">
+      <input type="text" id="date-input" placeholder="2026-03-28 20:00:00" oninput="convertDate()">
+      <select id="tz-select" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;" onchange="convertDate()">
+        <option value="local">Local</option>
+        <option value="utc">UTC</option>
+      </select>
+      <button class="primary" onclick="convertDate()">Convertir →</button>
+    </div>
+    <p class="error" id="date-error"></p>
+    <div id="date-result"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Exemples de formats</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+      <div onclick="loadTs(1711670400)" style="cursor:pointer;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        <div style="color:var(--text-dim);font-size:11px">Unix (s)</div>
+        <code style="color:var(--accent)">1711670400</code>
+      </div>
+      <div onclick="loadTs(1711670400000)" style="cursor:pointer;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        <div style="color:var(--text-dim);font-size:11px">Unix (ms)</div>
+        <code style="color:var(--accent)">1711670400000</code>
+      </div>
+      <div onclick="loadDate('2026-03-28')" style="cursor:pointer;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        <div style="color:var(--text-dim);font-size:11px">ISO date</div>
+        <code style="color:var(--accent)">2026-03-28</code>
+      </div>
+      <div onclick="loadDate('2026-03-28T20:00:00Z')" style="cursor:pointer;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        <div style="color:var(--text-dim);font-size:11px">ISO 8601</div>
+        <code style="color:var(--accent)">2026-03-28T20:00:00Z</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Live clock
+function updateClock() {
+  const now = Date.now();
+  const ts = Math.floor(now / 1000);
+  document.getElementById('now-ts').textContent = ts;
+  document.getElementById('now-local').textContent = new Date(now).toLocaleString('fr-FR');
+  document.getElementById('now-utc').textContent = new Date(now).toISOString().replace('T', ' ').replace('.000Z', ' UTC');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+}
+
+function renderTsResult(date, ts) {
+  const now = Date.now();
+  const diff = now - date.getTime();
+  const abs = Math.abs(diff);
+  const past = diff > 0;
+  const s = Math.floor(abs / 1000), m = Math.floor(s/60), h = Math.floor(m/60), d = Math.floor(h/24);
+  const relative = d > 365 ? `${Math.floor(d/365)} an(s)` : d > 0 ? `${d} jour(s)` : h > 0 ? `${h}h` : m > 0 ? `${m}min` : `${s}s`;
+
+  const items = [
+    ['Timestamp (s)', ts],
+    ['Timestamp (ms)', ts * 1000],
+    ['Local', date.toLocaleString('fr-FR')],
+    ['UTC', date.toUTCString()],
+    ['ISO 8601', date.toISOString()],
+    ['Date locale', date.toLocaleDateString('fr-FR', {weekday:'long',year:'numeric',month:'long',day:'numeric'})],
+    ['Heure locale', date.toLocaleTimeString('fr-FR')],
+  ];
+
+  const html = `<div class="result-grid">${items.map(([l,v]) =>
+    `<div class="result-item" onclick="copyText('${v}');this.style.borderColor='var(--success)';setTimeout(()=>this.style.borderColor='',800)">
+      <div class="r-label">${l}</div>
+      <div class="r-value">${v}</div>
+    </div>`
+  ).join('')}</div>
+  <div class="relative">🕐 ${past ? 'Il y a' : 'Dans'} ${relative}</div>`;
+  return html;
+}
+
+function convertTS() {
+  const raw = document.getElementById('ts-input').value.trim();
+  document.getElementById('ts-error').textContent = '';
+  if (!raw) { document.getElementById('ts-result').innerHTML = ''; return; }
+
+  let ts = parseInt(raw);
+  if (isNaN(ts)) { document.getElementById('ts-error').textContent = '⚠️ Entrez un nombre entier'; return; }
+
+  // Auto-detect ms vs s
+  if (raw.length >= 13) ts = Math.floor(ts / 1000);
+
+  const date = new Date(ts * 1000);
+  if (isNaN(date.getTime())) { document.getElementById('ts-error').textContent = '⚠️ Timestamp invalide'; return; }
+
+  document.getElementById('ts-result').innerHTML = renderTsResult(date, ts);
+}
+
+function convertDate() {
+  const raw = document.getElementById('date-input').value.trim();
+  const tz = document.getElementById('tz-select').value;
+  document.getElementById('date-error').textContent = '';
+  if (!raw) { document.getElementById('date-result').innerHTML = ''; return; }
+
+  let date;
+  if (tz === 'utc' && !raw.includes('Z') && !raw.includes('+')) {
+    date = new Date(raw + (raw.includes('T') ? 'Z' : 'T00:00:00Z'));
+  } else {
+    date = new Date(raw);
+  }
+
+  if (isNaN(date.getTime())) {
+    document.getElementById('date-error').textContent = '⚠️ Format de date non reconnu. Essayez: 2026-03-28 ou 2026-03-28T20:00:00Z';
+    return;
+  }
+
+  const ts = Math.floor(date.getTime() / 1000);
+  document.getElementById('date-result').innerHTML = renderTsResult(date, ts);
+}
+
+function useNow() {
+  const ts = Math.floor(Date.now() / 1000);
+  document.getElementById('ts-input').value = ts;
+  convertTS();
+}
+
+function loadTs(ts) {
+  document.getElementById('ts-input').value = ts;
+  convertTS();
+  document.getElementById('ts-input').scrollIntoView({behavior:'smooth'});
+}
+
+function loadDate(d) {
+  document.getElementById('date-input').value = d;
+  convertDate();
+  document.getElementById('date-input').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

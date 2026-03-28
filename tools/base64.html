@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64 Encoder/Decoder — DevToolkit</title>
+<meta name="description" content="Encodez et décodez du texte en Base64 en ligne. Supporte UTF-8, URL-safe Base64. Aucune donnée envoyée au serveur.">
+<style>
+  :root { --bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--error:#ef4444; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  nav a:hover{color:var(--text);}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:900px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .mode-tabs{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content;}
+  .mode-tab{padding:8px 24px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;color:var(--text-dim);}
+  .mode-tab.active{background:var(--accent);color:white;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+  .panel-header{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text-dim);}
+  textarea{width:100%;height:160px;background:transparent;border:none;outline:none;color:var(--text);font-family:'Fira Code','Consolas',monospace;font-size:13px;padding:16px;resize:vertical;line-height:1.6;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .error{color:var(--error);font-size:13px;padding:8px 0;}
+  .options{display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+  .options label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim);cursor:pointer;}
+  .options input[type=checkbox]{accent-color:var(--accent);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">Base64</a>
+</nav>
+
+<div class="container">
+  <h1>🔐 Base64 Encoder / Decoder</h1>
+  <p class="subtitle">Encodez ou décodez du texte en Base64. Utile pour les tokens d'API, les images inline, les headers HTTP. Tout se passe dans votre navigateur.</p>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab-encode" onclick="setMode('encode')">Encoder →</div>
+    <div class="mode-tab" id="tab-decode" onclick="setMode('decode')">← Décoder</div>
+  </div>
+
+  <div class="options">
+    <label><input type="checkbox" id="url-safe"> URL-safe (remplace + par - et / par _)</label>
+    <label><input type="checkbox" id="no-padding"> Sans padding (sans =)</label>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" id="input-label">📥 Texte à encoder</div>
+    <textarea id="input" placeholder="Entrez le texte à encoder..." oninput="autoProcess()"></textarea>
+  </div>
+
+  <div class="toolbar">
+    <button class="primary" id="action-btn" onclick="process()">🔐 Encoder</button>
+    <button onclick="swap()">⇄ Inverser</button>
+    <button onclick="copyOutput()">📋 Copier</button>
+    <button onclick="clearAll()">🗑 Vider</button>
+    <button onclick="loadSample()">📄 Exemple</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" id="output-label">📤 Résultat encodé</div>
+    <textarea id="output" readonly placeholder="Le résultat apparaît ici..."></textarea>
+  </div>
+
+  <p class="error" id="error"></p>
+
+  <div style="margin-top:24px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+    <h3 style="font-size:14px;margin-bottom:8px;">💡 Cas d'usage courants</h3>
+    <ul style="font-size:13px;color:var(--text-dim);line-height:2;padding-left:20px;">
+      <li>Headers HTTP Authorization: <code>Basic base64(user:password)</code></li>
+      <li>Images inline dans du HTML/CSS: <code>data:image/png;base64,...</code></li>
+      <li>Tokens JWT (chaque partie est en Base64 URL-safe)</li>
+      <li>Transmission de données binaires dans du JSON</li>
+      <li>Variables d'environnement pour les secrets</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+let mode = 'encode';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-encode').classList.toggle('active', m === 'encode');
+  document.getElementById('tab-decode').classList.toggle('active', m === 'decode');
+  document.getElementById('input-label').textContent = m === 'encode' ? '📥 Texte à encoder' : '📥 Base64 à décoder';
+  document.getElementById('output-label').textContent = m === 'encode' ? '📤 Résultat encodé' : '📤 Texte décodé';
+  document.getElementById('action-btn').textContent = m === 'encode' ? '🔐 Encoder' : '🔓 Décoder';
+  document.getElementById('input').placeholder = m === 'encode' ? 'Entrez le texte à encoder...' : 'Collez le Base64 à décoder...';
+  autoProcess();
+}
+
+function process() {
+  const input = document.getElementById('input').value;
+  const urlSafe = document.getElementById('url-safe').checked;
+  const noPad = document.getElementById('no-padding').checked;
+  document.getElementById('error').textContent = '';
+
+  try {
+    let result;
+    if (mode === 'encode') {
+      // UTF-8 safe encoding
+      result = btoa(unescape(encodeURIComponent(input)));
+      if (urlSafe) result = result.replace(/\+/g, '-').replace(/\//g, '_');
+      if (noPad) result = result.replace(/=/g, '');
+    } else {
+      let b64 = input.trim();
+      // Handle URL-safe
+      b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+      // Re-add padding
+      while (b64.length % 4) b64 += '=';
+      result = decodeURIComponent(escape(atob(b64)));
+    }
+    document.getElementById('output').value = result;
+  } catch (e) {
+    document.getElementById('error').textContent = '⚠️ Erreur : ' + (mode === 'decode' ? 'Base64 invalide — vérifiez que votre entrée est correctement encodée.' : e.message);
+    document.getElementById('output').value = '';
+  }
+}
+
+function autoProcess() {
+  if (document.getElementById('input').value) process();
+}
+
+function swap() {
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  input.value = output.value;
+  setMode(mode === 'encode' ? 'decode' : 'encode');
+}
+
+function copyOutput() {
+  const text = document.getElementById('output').value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('button[onclick="copyOutput()"]');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = '📋 Copier', 1500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('error').textContent = '';
+}
+
+function loadSample() {
+  if (mode === 'encode') {
+    document.getElementById('input').value = 'Bonjour DevToolkit ! Texte avec accents: é à ü 🚀';
+  } else {
+    document.getElementById('input').value = 'SGVsbG8gZnJvbSBEZXZUb29sa2l0IQ==';
+  }
+  process();
+}
+</script>
+</body>
+</html>

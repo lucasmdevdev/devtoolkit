@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Formatter & Validator — DevToolkit</title>
+<meta name="description" content="Formatez et validez votre JSON en ligne gratuitement. Coloration syntaxique, détection d'erreurs, minification. Aucune donnée envoyée au serveur.">
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d2e; --surface2: #252836;
+    --border: #2e3150; --accent: #6366f1; --text: #e2e8f0; --text-dim: #94a3b8;
+    --success: #10b981; --error: #ef4444; --warning: #f59e0b;
+    --key: #7dd3fc; --str: #86efac; --num: #fbbf24; --bool: #c084fc; --null: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 12px; }
+  nav a { color: var(--text-dim); text-decoration: none; font-size: 14px; }
+  nav a:hover { color: var(--text); }
+  nav .logo { font-weight: 800; color: var(--accent); font-size: 16px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+  .subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;
+  }
+  button {
+    padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px;
+    transition: all 0.15s;
+  }
+  button:hover { background: var(--accent); border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  button.danger { border-color: var(--error); color: var(--error); }
+  button.danger:hover { background: var(--error); color: white; }
+  .editor-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .panel-header {
+    padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    font-size: 13px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+  }
+  .panel-header .status { margin-left: auto; font-size: 12px; }
+  .panel-header .status.ok { color: var(--success); }
+  .panel-header .status.err { color: var(--error); }
+  textarea {
+    width: 100%; height: 500px; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; padding: 16px; resize: none; line-height: 1.6;
+  }
+  #output {
+    height: 500px; overflow: auto; padding: 16px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.6; white-space: pre;
+  }
+  .error-msg {
+    padding: 12px 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: var(--error);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .stats { color: var(--text-dim); font-size: 12px; margin-left: auto; }
+  /* Syntax highlighting */
+  .json-key { color: var(--key); }
+  .json-str { color: var(--str); }
+  .json-num { color: var(--num); }
+  .json-bool { color: var(--bool); }
+  .json-null { color: var(--null); }
+  .json-punct { color: var(--text-dim); }
+  @media (max-width: 768px) { .editor-layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">JSON Formatter</a>
+</nav>
+
+<div class="container">
+  <h1>📋 JSON Formatter & Validator</h1>
+  <p class="subtitle">Formatez, validez et minifiez votre JSON — 100% dans votre navigateur, aucune donnée envoyée.</p>
+
+  <div class="toolbar">
+    <button class="primary" onclick="format()">✨ Formater</button>
+    <button onclick="minify()">⚡ Minifier</button>
+    <button onclick="sortKeys()">🔤 Trier les clés</button>
+    <button onclick="copyOutput()">📋 Copier le résultat</button>
+    <button onclick="clearAll()" class="danger">🗑 Vider</button>
+    <button onclick="loadSample()">📄 Exemple</button>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="editor-layout">
+    <div class="panel">
+      <div class="panel-header">
+        <span>📥 Entrée</span>
+        <span id="input-status" class="status"></span>
+      </div>
+      <textarea id="input" placeholder='Collez votre JSON ici...&#10;&#10;{"name": "DevToolkit", "version": "1.0"}' oninput="onInputChange()"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span>📤 Résultat</span>
+        <span id="output-status" class="status"></span>
+      </div>
+      <div id="output"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let indentSize = 2;
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) return `<span class="json-key">${match}</span>`;
+        return `<span class="json-str">${match}</span>`;
+      }
+      if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
+      if (/null/.test(match)) return `<span class="json-null">${match}</span>`;
+      return `<span class="json-num">${match}</span>`;
+    });
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.style.display = 'block';
+  el.textContent = '⚠️ ' + msg;
+  document.getElementById('input-status').textContent = '✗ Invalide';
+  document.getElementById('input-status').className = 'status err';
+}
+
+function clearError() {
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('input-status').textContent = '✓ Valide';
+  document.getElementById('input-status').className = 'status ok';
+}
+
+function format() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  try {
+    const parsed = JSON.parse(input);
+    const formatted = JSON.stringify(parsed, null, indentSize);
+    document.getElementById('output').innerHTML = syntaxHighlight(formatted);
+    document.getElementById('output-status').textContent = '✓ Formaté';
+    document.getElementById('output-status').className = 'status ok';
+    clearError();
+    updateStats(input, formatted);
+  } catch (e) {
+    showError(e.message);
+    document.getElementById('output').innerHTML = '';
+    document.getElementById('output-status').textContent = '';
+  }
+}
+
+function minify() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  try {
+    const parsed = JSON.parse(input);
+    const minified = JSON.stringify(parsed);
+    document.getElementById('output').textContent = minified;
+    document.getElementById('output-status').textContent = '✓ Minifié';
+    document.getElementById('output-status').className = 'status ok';
+    clearError();
+    updateStats(input, minified);
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function sortKeys() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  try {
+    const parsed = JSON.parse(input);
+    const sorted = sortObject(parsed);
+    const formatted = JSON.stringify(sorted, null, indentSize);
+    document.getElementById('output').innerHTML = syntaxHighlight(formatted);
+    document.getElementById('output-status').textContent = '✓ Trié';
+    document.getElementById('output-status').className = 'status ok';
+    clearError();
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function sortObject(obj) {
+  if (Array.isArray(obj)) return obj.map(sortObject);
+  if (obj && typeof obj === 'object') {
+    return Object.keys(obj).sort().reduce((acc, k) => {
+      acc[k] = sortObject(obj[k]);
+      return acc;
+    }, {});
+  }
+  return obj;
+}
+
+function copyOutput() {
+  const text = document.getElementById('output').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('button[onclick="copyOutput()"]');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = '📋 Copier le résultat', 1500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('input-status').textContent = '';
+  document.getElementById('output-status').textContent = '';
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('stats').textContent = '';
+}
+
+function loadSample() {
+  document.getElementById('input').value = JSON.stringify({
+    "name": "DevToolkit",
+    "version": "1.0.0",
+    "description": "Outils gratuits pour développeurs",
+    "author": {"name": "Lucas M", "url": "https://lucasmdevdev.github.io"},
+    "tools": ["JSON Formatter", "Base64", "Regex Tester", "JWT Decoder"],
+    "stats": {"users": 1234, "tools": 12, "free": true},
+    "license": "MIT"
+  });
+  format();
+}
+
+function updateStats(input, output) {
+  const chars = output.length;
+  const lines = output.split('\n').length;
+  document.getElementById('stats').textContent = `${lines} lignes · ${chars.toLocaleString()} caractères`;
+}
+
+function onInputChange() {
+  const val = document.getElementById('input').value.trim();
+  if (!val) {
+    document.getElementById('input-status').textContent = '';
+    return;
+  }
+  try {
+    JSON.parse(val);
+    clearError();
+  } catch (e) {
+    document.getElementById('input-status').textContent = '✗ Invalide';
+    document.getElementById('input-status').className = 'status err';
+    document.getElementById('error-msg').style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

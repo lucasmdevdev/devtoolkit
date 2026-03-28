@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevToolkit — Outils en ligne gratuits pour développeurs</title>
+<meta name="description" content="Collection d'outils gratuits pour développeurs : JSON formatter, Base64, Markdown, Regex, Timestamp, et plus. Rapide, sans inscription, sans pub.">
+<meta property="og:title" content="DevToolkit — Outils gratuits pour développeurs">
+<meta property="og:description" content="JSON formatter, Base64 encoder, Regex tester, Markdown preview et plus — 100% gratuit, aucune inscription.">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #252836;
+    --border: #2e3150;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --success: #10b981;
+    --error: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header .logo {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header .tagline {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  .hero {
+    text-align: center;
+    padding: 48px 0 40px;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e2e8f0 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0 auto 32px;
+  }
+  .search-bar {
+    max-width: 400px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar::before {
+    content: "🔍";
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+  }
+  .category-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .tab:hover, .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .tool-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  .tool-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  }
+  .tool-icon { font-size: 32px; margin-bottom: 12px; }
+  .tool-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .tool-desc { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+  .tool-tag {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 3px 10px;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent);
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .affiliate-banner {
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(99,102,241,0.1) 100%);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .affiliate-banner .emoji { font-size: 28px; }
+  .affiliate-banner h3 { font-size: 15px; color: var(--text); margin-bottom: 4px; }
+  .affiliate-banner p { font-size: 13px; color: var(--text-dim); }
+  .affiliate-banner a {
+    margin-left: auto;
+    padding: 8px 20px;
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-dim);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.8rem; }
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">⚡ DevToolkit</span>
+  <span class="tagline">Outils gratuits pour développeurs</span>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <h1>Vos outils dev,<br>en un clic</h1>
+    <p>Formatez, encodez, testez, convertissez — sans inscription, sans pub intrusive, 100% dans votre navigateur.</p>
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Rechercher un outil..." oninput="filterTools()">
+    </div>
+  </div>
+
+  <div class="category-tabs">
+    <div class="tab active" onclick="setCategory('all', this)">Tous</div>
+    <div class="tab" onclick="setCategory('formatters', this)">Formatters</div>
+    <div class="tab" onclick="setCategory('encoders', this)">Encodeurs</div>
+    <div class="tab" onclick="setCategory('converters', this)">Convertisseurs</div>
+    <div class="tab" onclick="setCategory('generators', this)">Générateurs</div>
+    <div class="tab" onclick="setCategory('testers', this)">Testeurs</div>
+  </div>
+
+  <div class="tools-grid" id="tools-grid">
+    <!-- Populated by JS -->
+  </div>
+
+  <div class="affiliate-banner">
+    <span class="emoji">🚀</span>
+    <div>
+      <h3>Vous codez des APIs ? Testez Hoppscotch</h3>
+      <p>Alternative open-source à Postman — rapide, collaboratif, gratuit.</p>
+    </div>
+    <a href="https://hoppscotch.io" rel="nofollow" target="_blank">Essayer gratuitement →</a>
+  </div>
+
+  <div class="tools-grid" id="tools-grid-2">
+    <!-- More tools -->
+  </div>
+
+  <div class="affiliate-banner">
+    <span class="emoji">💡</span>
+    <div>
+      <h3>Votre prochain projet mérite un bon hébergement</h3>
+      <p>Railway — déployez en 2 minutes avec Git. 5$/mois, scaling automatique.</p>
+    </div>
+    <a href="https://railway.app" rel="nofollow" target="_blank">5$ de crédit gratuit →</a>
+  </div>
+</div>
+
+<footer>
+  <p>DevToolkit — Fait avec ❤️ par <a href="https://lucasmdevdev.github.io">Lucas M</a> · <a href="https://lucasmdevdev.github.io">Blog</a> · Aucune donnée collectée · Tout tourne dans votre navigateur</p>
+</footer>
+
+<script>
+const TOOLS = [
+  {
+    id: "json-formatter",
+    name: "JSON Formatter",
+    icon: "📋",
+    desc: "Formatez et validez votre JSON en un clic. Coloration syntaxique, détection d'erreurs.",
+    category: "formatters",
+    href: "tools/json-formatter.html"
+  },
+  {
+    id: "base64",
+    name: "Base64 Encoder/Decoder",
+    icon: "🔐",
+    desc: "Encodez ou décodez du texte en Base64. Utile pour les tokens, les images inline, les APIs.",
+    category: "encoders",
+    href: "tools/base64.html"
+  },
+  {
+    id: "markdown-preview",
+    name: "Markdown Preview",
+    icon: "📝",
+    desc: "Écrivez du Markdown et voyez le résultat en temps réel. Export HTML inclus.",
+    category: "formatters",
+    href: "tools/markdown-preview.html"
+  },
+  {
+    id: "regex-tester",
+    name: "Regex Tester",
+    icon: "🔍",
+    desc: "Testez vos expressions régulières avec highlight des matches. Supporte les flags g, i, m.",
+    category: "testers",
+    href: "tools/regex-tester.html"
+  },
+  {
+    id: "timestamp",
+    name: "Timestamp Converter",
+    icon: "⏱️",
+    desc: "Convertissez les timestamps Unix en dates lisibles, et vice-versa. UTC et local.",
+    category: "converters",
+    href: "tools/timestamp.html"
+  },
+  {
+    id: "url-encoder",
+    name: "URL Encoder/Decoder",
+    icon: "🔗",
+    desc: "Encodez ou décodez des URLs et paramètres. Utile pour les query strings et les redirections.",
+    category: "encoders",
+    href: "tools/url-encoder.html"
+  },
+  {
+    id: "jwt-decoder",
+    name: "JWT Decoder",
+    icon: "🎫",
+    desc: "Décodez les tokens JWT et inspectez le header, le payload et l'expiration. 100% local.",
+    category: "encoders",
+    href: "tools/jwt-decoder.html"
+  },
+  {
+    id: "color-converter",
+    name: "Color Converter",
+    icon: "🎨",
+    desc: "Convertissez entre HEX, RGB, HSL, HSB. Avec aperçu et copie en un clic.",
+    category: "converters",
+    href: "tools/color-converter.html"
+  },
+  {
+    id: "password-generator",
+    name: "Générateur de mot de passe",
+    icon: "🔑",
+    desc: "Générez des mots de passe sécurisés. Longueur, caractères spéciaux, entropie affichée.",
+    category: "generators",
+    href: "tools/password-generator.html"
+  },
+  {
+    id: "hash-generator",
+    name: "Hash Generator",
+    icon: "🔒",
+    desc: "Calculez les hash MD5, SHA-1, SHA-256, SHA-512 de n'importe quel texte. Via Web Crypto API.",
+    category: "generators",
+    href: "tools/hash-generator.html"
+  },
+  {
+    id: "diff-viewer",
+    name: "Diff Viewer",
+    icon: "↔️",
+    desc: "Comparez deux textes ligne par ligne. Idéal pour repérer les différences entre configs.",
+    category: "testers",
+    href: "tools/diff-viewer.html"
+  },
+  {
+    id: "cron-helper",
+    name: "Cron Expression Helper",
+    icon: "🗓️",
+    desc: "Créez et comprenez les expressions cron. Aperçu des prochaines exécutions.",
+    category: "generators",
+    href: "tools/cron-helper.html"
+  },
+];
+
+let currentCategory = 'all';
+
+function renderTools(tools) {
+  const grid = document.getElementById('tools-grid');
+  const half = Math.ceil(tools.length / 2);
+  const grid2 = document.getElementById('tools-grid-2');
+
+  const renderCard = (tool) => `
+    <a class="tool-card" href="${tool.href}" data-category="${tool.category}">
+      <div class="tool-icon">${tool.icon}</div>
+      <div class="tool-name">${tool.name}</div>
+      <div class="tool-desc">${tool.desc}</div>
+      <span class="tool-tag">${tool.category}</span>
+    </a>
+  `;
+
+  grid.innerHTML = tools.slice(0, half).map(renderCard).join('');
+  grid2.innerHTML = tools.slice(half).map(renderCard).join('');
+}
+
+function filterTools() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = TOOLS.filter(t => {
+    const matchCat = currentCategory === 'all' || t.category === currentCategory;
+    const matchQ = !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  renderTools(filtered);
+}
+
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  filterTools();
+}
+
+// Initial render
+renderTools(TOOLS);
+</script>
+</body>
+</html>
