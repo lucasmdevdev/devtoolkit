@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON to TypeScript — DevToolkit</title>
+<meta name="description" content="Convert JSON to TypeScript interfaces or types instantly. Handles nested objects, arrays, unions, optional properties.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--dim:#94a3b8;--success:#10b981;--error:#ef4444}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header a{color:var(--dim);text-decoration:none;font-size:14px}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .container{max-width:1100px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--dim);margin-bottom:24px}
+  .options{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+  .opt label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--dim)}
+  .opt input[type=checkbox]{cursor:pointer}
+  select,input[type=text]{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:14px}
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.panels{grid-template-columns:1fr}}
+  .panel label{display:block;font-weight:600;font-size:13px;color:var(--dim);margin-bottom:8px}
+  textarea{width:100%;height:420px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:14px;font-family:'Fira Code',monospace;font-size:12px;resize:vertical;outline:none;transition:border-color .2s;line-height:1.6}
+  textarea:focus{border-color:var(--accent)}
+  .actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#4f46e5}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+  .status{font-size:13px;color:var(--success);margin-top:8px}
+  .error{color:var(--error)!important}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">← DevToolkit</a>
+  <span class="logo">JSON → TypeScript</span>
+</header>
+<div class="container">
+  <h1>🔷 JSON to TypeScript</h1>
+  <p class="subtitle">Convert JSON to TypeScript interfaces or types instantly. Handles nested objects, arrays, nullables.</p>
+  
+  <div class="options">
+    <div class="opt"><label><input type="checkbox" id="useInterface" checked> <span>interface</span></label></div>
+    <div class="opt"><label><input type="checkbox" id="optional"> <span>All optional (?)</span></label></div>
+    <div class="opt"><label><input type="checkbox" id="readonly"> <span>readonly</span></label></div>
+    <div class="opt"><label>Root name: <input type="text" id="rootName" value="Root" style="width:120px;margin-left:6px"></label></div>
+    <div class="opt"><label>Indent: <select id="indent" style="margin-left:6px"><option value="2">2 spaces</option><option value="4" selected>4 spaces</option></select></label></div>
+  </div>
+  
+  <div class="actions">
+    <button class="btn btn-primary" onclick="convert()">🔄 Convert</button>
+    <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
+    <button class="btn btn-secondary" onclick="clearAll()">🗑️ Clear</button>
+  </div>
+  
+  <div class="panels">
+    <div class="panel">
+      <label>JSON Input</label>
+      <textarea id="input" placeholder='{"id": 1, "name": "Alice", "email": "alice@example.com", "age": 28, "active": true, "address": {"street": "123 Main St", "city": "Paris"}, "tags": ["developer", "admin"]}'></textarea>
+    </div>
+    <div class="panel">
+      <label>TypeScript Output</label>
+      <textarea id="output" readonly placeholder="TypeScript interfaces will appear here..."></textarea>
+    </div>
+  </div>
+  <div id="status" class="status"></div>
+</div>
+
+<script>
+const definitions = new Map();
+
+function getType(value, key, depth) {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  
+  const t = typeof value;
+  if (t === 'string') return 'string';
+  if (t === 'number') return Number.isInteger(value) ? 'number' : 'number';
+  if (t === 'boolean') return 'boolean';
+  
+  if (Array.isArray(value)) {
+    if (value.length === 0) return 'unknown[]';
+    const types = new Set(value.map(v => getType(v, key, depth)));
+    const itemType = types.size === 1 ? [...types][0] : [...types].join(' | ');
+    return `${itemType}[]`;
+  }
+  
+  if (t === 'object') {
+    const name = toPascalCase(key) + (depth > 0 ? '' : '');
+    buildInterface(name, value, depth + 1);
+    return name;
+  }
+  
+  return 'unknown';
+}
+
+function toPascalCase(str) {
+  if (!str) return 'Object';
+  return str.replace(/(^\w|[-_\s]\w)/g, m => m.replace(/[-_\s]/, '').toUpperCase());
+}
+
+function buildInterface(name, obj, depth = 0) {
+  if (definitions.has(name)) return;
+  
+  const indent = ' '.repeat(parseInt(document.getElementById('indent').value));
+  const useInterface = document.getElementById('useInterface').checked;
+  const optional = document.getElementById('optional').checked;
+  const readonly = document.getElementById('readonly').checked;
+  const keyword = useInterface ? 'interface' : 'type';
+  
+  const lines = [];
+  const prefix = useInterface ? `${keyword} ${name}` : `type ${name} =`;
+  lines.push(`${prefix} {`);
+  
+  for (const [key, value] of Object.entries(obj)) {
+    const safeProp = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+    const q = optional ? '?' : '';
+    const ro = readonly ? 'readonly ' : '';
+    const typeStr = getType(value, key, depth);
+    
+    // Handle nullable
+    const finalType = value === null ? 'string | null' : typeStr;
+    lines.push(`${indent}${ro}${safeProp}${q}: ${finalType};`);
+  }
+  
+  lines.push('}');
+  definitions.set(name, lines.join('\n'));
+}
+
+function convert() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  
+  definitions.clear();
+  
+  try {
+    const parsed = JSON.parse(input);
+    const rootName = document.getElementById('rootName').value.trim() || 'Root';
+    
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) {
+        document.getElementById('output').value = `type ${rootName} = unknown[]`;
+        return;
+      }
+      buildInterface(rootName, parsed[0], 0);
+      const arrType = `type ${rootName}Array = ${rootName}[]`;
+      document.getElementById('output').value = 
+        [...definitions.values()].join('\n\n') + '\n\n' + arrType;
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      buildInterface(rootName, parsed, 0);
+      document.getElementById('output').value = [...definitions.values()].join('\n\n');
+    } else {
+      document.getElementById('output').value = `type ${rootName} = ${typeof parsed}`;
+    }
+    
+    const count = definitions.size;
+    document.getElementById('status').textContent = `✅ Generated ${count} interface${count>1?'s':''}`;
+    document.getElementById('status').className = 'status';
+  } catch (e) {
+    document.getElementById('status').textContent = '❌ Invalid JSON: ' + e.message;
+    document.getElementById('status').className = 'status error';
+  }
+}
+
+function copyOutput() {
+  const out = document.getElementById('output').value;
+  if (!out) return;
+  navigator.clipboard.writeText(out).then(() => {
+    document.getElementById('status').textContent = '✅ Copied to clipboard!';
+  });
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('status').textContent = '';
+  definitions.clear();
+}
+
+// Auto-convert on paste
+document.getElementById('input').addEventListener('input', () => {
+  try { JSON.parse(document.getElementById('input').value); convert(); } catch(e) {}
+});
+</script>
+</body>
+</html>
