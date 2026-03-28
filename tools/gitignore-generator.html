@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>.gitignore Generator — DevToolkit</title>
+<meta name="description" content="Generate .gitignore files for any tech stack. Select your technologies and get the perfect gitignore instantly.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--dim:#94a3b8;--success:#10b981}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header a{color:var(--dim);text-decoration:none;font-size:14px}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .container{max-width:1100px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--dim);margin-bottom:24px}
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:800px){.layout{grid-template-columns:1fr}}
+  .left-panel{display:flex;flex-direction:column;gap:16px}
+  .tech-section h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:10px;font-weight:700}
+  .tech-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .tech-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--dim);cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;user-select:none}
+  .tech-btn.selected{background:var(--accent);color:white;border-color:var(--accent)}
+  .tech-btn:hover:not(.selected){border-color:var(--accent);color:var(--text)}
+  .selected-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:36px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px}
+  .tag{padding:4px 10px;background:var(--accent);color:white;border-radius:12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .tag span{cursor:pointer;opacity:.7;transition:opacity .2s}.tag span:hover{opacity:1}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#4f46e5}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+  .right-panel label{display:block;font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:600}
+  textarea{width:100%;height:560px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:14px;font-family:'Fira Code',monospace;font-size:12px;resize:vertical;outline:none;line-height:1.6;transition:border-color .2s}
+  textarea:focus{border-color:var(--accent)}
+  .status{margin-top:8px;font-size:13px;color:var(--success)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">← DevToolkit</a>
+  <span class="logo">.gitignore Generator</span>
+</header>
+<div class="container">
+  <h1>🚫 .gitignore Generator</h1>
+  <p class="subtitle">Select your tech stack and get a perfect .gitignore file instantly.</p>
+  
+  <div class="layout">
+    <div class="left-panel">
+      
+      <div>
+        <div class="tech-section"><h3>Selected Technologies</h3></div>
+        <div class="selected-tags" id="selected-tags">
+          <span style="color:var(--dim);font-size:13px">Click technologies below to add them...</span>
+        </div>
+      </div>
+
+      <div class="tech-section">
+        <h3>Languages</h3>
+        <div class="tech-grid" id="lang-grid"></div>
+      </div>
+      
+      <div class="tech-section">
+        <h3>Frameworks & Libraries</h3>
+        <div class="tech-grid" id="framework-grid"></div>
+      </div>
+      
+      <div class="tech-section">
+        <h3>Tools & Environments</h3>
+        <div class="tech-grid" id="tools-grid"></div>
+      </div>
+      
+      <div class="tech-section">
+        <h3>IDEs & Editors</h3>
+        <div class="tech-grid" id="ide-grid"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="generateGitignore()">🔄 Generate</button>
+        <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
+        <button class="btn btn-secondary" onclick="downloadOutput()">⬇️ Download</button>
+        <button class="btn btn-secondary" onclick="clearAll()">🗑️ Clear</button>
+      </div>
+    </div>
+    
+    <div class="right-panel">
+      <label>Generated .gitignore</label>
+      <textarea id="output" readonly placeholder="Select technologies above and click Generate..."></textarea>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TECH = {
+  languages: [
+    'Node.js', 'Python', 'Java', 'Go', 'Rust', 'Ruby', 'PHP', 'C', 'C++', 'C#', 
+    'Swift', 'Kotlin', 'Dart', 'R', 'Scala', 'Haskell', 'Elixir'
+  ],
+  frameworks: [
+    'React', 'Next.js', 'Vue', 'Nuxt', 'Angular', 'Svelte', 'Express', 'NestJS',
+    'Django', 'Flask', 'FastAPI', 'Rails', 'Laravel', 'Spring', 'Gatsby', 'Astro',
+    'React Native', 'Flutter', 'Electron'
+  ],
+  tools: [
+    'Docker', 'Terraform', 'Kubernetes', 'Vagrant', 'Linux', 'macOS', 'Windows',
+    'Git', 'npm', 'yarn', 'pnpm', 'Webpack', 'Vite', 'Parcel', 'Gradle', 'Maven',
+    'Ansible', 'AWS', 'Vercel', 'Heroku'
+  ],
+  ides: [
+    'VS Code', 'JetBrains', 'Vim', 'Emacs', 'Eclipse', 'Xcode', 'Android Studio', 'Sublime Text'
+  ]
+};
+
+const PATTERNS = {
+  'Node.js': `# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnp
+.pnp.js
+dist/
+build/
+.npm
+.node_repl_history
+*.tgz
+package-lock.json
+!**/package-lock.json
+`,
+  'Python': `# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+.venv/
+venv/
+ENV/
+env/
+.env
+*.pyo
+instance/
+.webassets-cache
+`,
+  'Java': `# Java
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+target/
+build/
+.gradle/
+.idea/
+*.iws
+*.iml
+`,
+  'Go': `# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.sum
+vendor/
+bin/
+`,
+  'Rust': `# Rust
+/target/
+Cargo.lock
+**/*.rs.bk
+`,
+  'Ruby': `# Ruby
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
+.bundle/
+vendor/bundle
+lib/bundler/man/
+Gemfile.lock
+.ruby-version
+.ruby-gemset
+.rvmrc
+`,
+  'PHP': `# PHP
+/vendor/
+/node_modules/
+npm-debug.log
+yarn-error.log
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+`,
+  'C': `# C
+*.o
+*.a
+*.out
+*.so
+*.dSYM/
+`,
+  'C++': `# C++
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+*.app
+*.dSYM/
+build/
+CMakeCache.txt
+CMakeFiles/
+`,
+  'C#': `# C#
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.nuget.props
+*.nuget.targets
+NuGet.CommandLine.Test/
+*.nupkg
+*.log
+project.lock.json
+project.fragment.lock.json
+artifacts/
+`,
+  'React': `# React
+# (usually handled by Node.js section)
+.next/
+out/
+`,
+  'Next.js': `# Next.js
+.next/
+out/
+.vercel
+`,
+  'Vue': `# Vue
+dist/
+`,
+  'Nuxt': `# Nuxt
+.nuxt/
+.output/
+dist/
+`,
+  'Django': `# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+local_settings.py
+`,
+  'Flask': `# Flask
+instance/
+.webassets-cache
+`,
+  'FastAPI': `# FastAPI
+__pycache__/
+*.py[cod]
+`,
+  'Laravel': `# Laravel
+/vendor/
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+`,
+  'Rails': `# Rails
+*.rbc
+capybara-*.html
+.rspec
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/log/*.log
+/tmp/
+/doc/api/
+/doc/app/
+/public/system/
+/coverage/
+`,
+  'Spring': `# Spring
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+HELP.md
+.mvn/timing.properties
+`,
+  'Docker': `# Docker
+.docker/
+docker-compose.override.yml
+`,
+  'Terraform': `# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!example.tfvars
+.terraform.lock.hcl
+`,
+  'Kubernetes': `# Kubernetes
+*.kubeconfig
+`,
+  'macOS': `# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+`,
+  'Windows': `# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+`,
+  'Linux': `# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+`,
+  'VS Code': `# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
+`,
+  'JetBrains': `# JetBrains
+.idea/
+*.iws
+out/
+`,
+  'Vim': `# Vim
+[._]*.s[a-v][a-z]
+!*.svg
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+*~
+tags
+[._]*.un~
+`,
+  'Xcode': `# Xcode
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+`,
+  'Android Studio': `# Android Studio
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild
+.cxx/
+`,
+  'npm': `# npm
+node_modules/
+package-lock.json
+`,
+  'yarn': `# yarn
+node_modules/
+yarn.lock
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+`,
+  'pnpm': `# pnpm
+node_modules/
+.pnpm-store/
+`,
+  'Vite': `# Vite
+dist/
+dist-ssr/
+*.local
+`,
+  'Webpack': `# Webpack
+dist/
+`,
+  'Electron': `# Electron
+dist/
+release/
+out/
+`,
+  'Flutter': `# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+`,
+  'Dart': `# Dart
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+`,
+  'React Native': `# React Native
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+`,
+  'default': `# Environment
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+`
+};
+
+const selected = new Set();
+
+function initButtons() {
+  const mapping = {
+    'lang-grid': TECH.languages,
+    'framework-grid': TECH.frameworks,
+    'tools-grid': TECH.tools,
+    'ide-grid': TECH.ides
+  };
+  for (const [gridId, items] of Object.entries(mapping)) {
+    const grid = document.getElementById(gridId);
+    items.forEach(tech => {
+      const btn = document.createElement('button');
+      btn.className = 'tech-btn';
+      btn.textContent = tech;
+      btn.onclick = () => toggleTech(tech, btn);
+      grid.appendChild(btn);
+    });
+  }
+}
+
+function toggleTech(tech, btn) {
+  if (selected.has(tech)) {
+    selected.delete(tech);
+    btn.classList.remove('selected');
+  } else {
+    selected.add(tech);
+    btn.classList.add('selected');
+  }
+  renderTags();
+  generateGitignore();
+}
+
+function renderTags() {
+  const container = document.getElementById('selected-tags');
+  if (selected.size === 0) {
+    container.innerHTML = '<span style="color:var(--dim);font-size:13px">Click technologies below to add them...</span>';
+    return;
+  }
+  container.innerHTML = Array.from(selected).map(t =>
+    `<span class="tag">${t} <span onclick="removeTech('${t}')">✕</span></span>`
+  ).join('');
+}
+
+function removeTech(tech) {
+  selected.delete(tech);
+  document.querySelectorAll('.tech-btn').forEach(btn => {
+    if (btn.textContent === tech) btn.classList.remove('selected');
+  });
+  renderTags();
+  generateGitignore();
+}
+
+function generateGitignore() {
+  if (selected.size === 0) {
+    document.getElementById('output').value = '';
+    return;
+  }
+  
+  const seen = new Set();
+  let output = `# Generated by DevToolkit gitignore generator\n# https://lucasmdevdev.github.io/devtoolkit/\n\n`;
+  
+  // Always add defaults
+  output += PATTERNS['default'];
+  
+  for (const tech of selected) {
+    const pattern = PATTERNS[tech];
+    if (pattern && !seen.has(tech)) {
+      seen.add(tech);
+      output += '\n' + pattern;
+    }
+  }
+  
+  document.getElementById('output').value = output.trim();
+  document.getElementById('status').textContent = `✅ Generated for: ${Array.from(selected).join(', ')}`;
+}
+
+function copyOutput() {
+  const out = document.getElementById('output').value;
+  if (!out) return;
+  navigator.clipboard.writeText(out).then(() => {
+    document.getElementById('status').textContent = '✅ Copied to clipboard!';
+  });
+}
+
+function downloadOutput() {
+  const out = document.getElementById('output').value;
+  if (!out) return;
+  const blob = new Blob([out], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '.gitignore';
+  a.click();
+}
+
+function clearAll() {
+  selected.clear();
+  document.querySelectorAll('.tech-btn').forEach(btn => btn.classList.remove('selected'));
+  renderTags();
+  document.getElementById('output').value = '';
+  document.getElementById('status').textContent = '';
+}
+
+initButtons();
+</script>
+</body>
+</html>
