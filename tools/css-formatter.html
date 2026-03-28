@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Formatter & Minifier — DevToolkit</title>
+<meta name="description" content="Formater et minifier du CSS en ligne gratuitement. Beautify ou compresser votre CSS en un clic.">
+<style>
+  :root { --bg:#0f1117; --surface:#1a1d2e; --surface2:#252836; --border:#2e3150; --accent:#6366f1; --text:#e2e8f0; --text-dim:#94a3b8; --success:#10b981; --error:#ef4444; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 24px; display:flex; align-items:center; gap:12px; }
+  header a { color:var(--text); text-decoration:none; font-weight:700; font-size:18px; }
+  header .back { color:var(--text-dim); font-size:14px; }
+  .container { max-width:1200px; margin:0 auto; padding:32px 24px; }
+  h1 { font-size:1.8rem; margin-bottom:8px; }
+  .subtitle { color:var(--text-dim); margin-bottom:24px; }
+  .controls { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  button { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; transition:opacity .2s; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+  .btn-success { background:var(--success); color:#fff; }
+  button:hover { opacity:.85; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:700px) { .cols { grid-template-columns:1fr; } }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .panel-header { padding:12px 16px; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-dim); }
+  textarea { width:100%; padding:16px; background:transparent; border:none; color:var(--text); font-family:'Fira Code',monospace; font-size:13px; resize:vertical; min-height:400px; outline:none; line-height:1.6; }
+  .stats { display:flex; gap:16px; margin-top:12px; font-size:13px; color:var(--text-dim); }
+  .stat-badge { background:var(--surface); border:1px solid var(--border); padding:4px 10px; border-radius:6px; }
+  .options { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  .option-group { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-dim); }
+  input[type=number] { width:60px; padding:6px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">⚙️ DevToolkit</a>
+  <span class="back">/ CSS Formatter</span>
+</header>
+<div class="container">
+  <h1>CSS Formatter & Minifier</h1>
+  <p class="subtitle">Formater (beautify) ou minifier votre CSS en ligne — gratuit, sans inscription.</p>
+
+  <div class="options">
+    <div class="option-group">
+      <label>Indentation :</label>
+      <input type="number" id="indent" value="2" min="1" max="8">
+      <span>espaces</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-primary" onclick="formatCSS()">✨ Formater (Beautify)</button>
+    <button class="btn-secondary" onclick="minifyCSS()">🗜️ Minifier</button>
+    <button class="btn-secondary" onclick="copyOutput()">📋 Copier</button>
+    <button class="btn-secondary" onclick="clearAll()">🗑️ Effacer</button>
+    <button class="btn-secondary" onclick="swapPanels()">⇄ Swap</button>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="panel-header">
+        <span>CSS d'entrée</span>
+        <button class="btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="loadExample()">Exemple</button>
+      </div>
+      <textarea id="input" placeholder="Collez votre CSS ici..."></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span>Résultat</span>
+        <span id="output-info" style="font-size:12px;"></span>
+      </div>
+      <textarea id="output" placeholder="Le résultat apparaîtra ici..." readonly></textarea>
+    </div>
+  </div>
+
+  <div class="stats">
+    <span class="stat-badge" id="stat-in">Entrée : 0 chars</span>
+    <span class="stat-badge" id="stat-out">Sortie : 0 chars</span>
+    <span class="stat-badge" id="stat-ratio">Ratio : —</span>
+  </div>
+</div>
+
+<script>
+function formatCSS() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  const indent = ' '.repeat(parseInt(document.getElementById('indent').value) || 2);
+
+  let result = input
+    .replace(/\s*{\s*/g, ' {\n')
+    .replace(/\s*}\s*/g, '\n}\n\n')
+    .replace(/;\s*/g, ';\n')
+    .replace(/,\s*/g, ', ')
+    .split('\n')
+    .map(line => {
+      line = line.trim();
+      if (!line) return '';
+      // Indent properties (lines with : and ending with ;)
+      if (line.match(/^[a-zA-Z-]+\s*:/) || line.match(/^\/\*/)) {
+        return indent + line;
+      }
+      return line;
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  document.getElementById('output').value = result;
+  updateStats(input, result);
+}
+
+function minifyCSS() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+
+  let result = input
+    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
+    .replace(/\s+/g, ' ')             // Collapse whitespace
+    .replace(/\s*{\s*/g, '{')
+    .replace(/\s*}\s*/g, '}')
+    .replace(/\s*:\s*/g, ':')
+    .replace(/\s*;\s*/g, ';')
+    .replace(/\s*,\s*/g, ',')
+    .replace(/;}/g, '}')              // Remove last semicolon in rule
+    .trim();
+
+  document.getElementById('output').value = result;
+  document.getElementById('output-info').textContent = '🗜️ Minifié';
+  updateStats(input, result);
+}
+
+function updateStats(input, output) {
+  const inLen = input.length;
+  const outLen = output.length;
+  document.getElementById('stat-in').textContent = `Entrée : ${inLen.toLocaleString()} chars`;
+  document.getElementById('stat-out').textContent = `Sortie : ${outLen.toLocaleString()} chars`;
+  if (inLen > 0) {
+    const ratio = ((1 - outLen/inLen) * 100).toFixed(1);
+    const saved = inLen - outLen;
+    document.getElementById('stat-ratio').textContent = saved > 0
+      ? `${ratio}% économisé (${saved} chars)`
+      : `+${Math.abs(saved)} chars`;
+  }
+}
+
+function copyOutput() {
+  const out = document.getElementById('output').value;
+  if (!out) return;
+  navigator.clipboard.writeText(out).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copié!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('stat-in').textContent = 'Entrée : 0 chars';
+  document.getElementById('stat-out').textContent = 'Sortie : 0 chars';
+  document.getElementById('stat-ratio').textContent = 'Ratio : —';
+}
+
+function swapPanels() {
+  const inp = document.getElementById('input');
+  const out = document.getElementById('output');
+  const tmp = inp.value;
+  inp.value = out.value;
+  out.value = tmp;
+}
+
+function loadExample() {
+  document.getElementById('input').value = `.container{max-width:1200px;margin:0 auto;padding:0 24px}.hero{text-align:center;padding:60px 0}.hero h1{font-size:3rem;font-weight:800;color:#1a1a2e;margin-bottom:16px}.hero p{color:#666;font-size:1.1rem;max-width:500px;margin:0 auto 32px}.btn{display:inline-block;padding:12px 28px;background:#6366f1;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;transition:transform .2s,box-shadow .2s}.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4)}@media(max-width:768px){.hero h1{font-size:2rem}.container{padding:0 16px}}`;
+}
+
+// Auto-update input stats on type
+document.getElementById('input').addEventListener('input', function() {
+  document.getElementById('stat-in').textContent = `Entrée : ${this.value.length.toLocaleString()} chars`;
+});
+</script>
+</body>
+</html>
