@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub README Generator — DevToolkit</title>
+<meta name="description" content="Generate a professional GitHub README.md in seconds. Fill in the details, get markdown.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--accent2:#8b5cf6;--text:#e2e8f0;--dim:#94a3b8;--success:#10b981;--error:#ef4444}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header a{color:var(--dim);text-decoration:none;font-size:14px}header a:hover{color:var(--text)}
+  .logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .container{max-width:1200px;margin:0 auto;padding:24px}
+  h1{font-size:1.6rem;font-weight:700;margin-bottom:6px}
+  .subtitle{color:var(--dim);margin-bottom:20px;font-size:15px}
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .form-panel{display:flex;flex-direction:column;gap:14px}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .section h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:12px;font-weight:700}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:13px;color:var(--dim);margin-bottom:4px}
+  .field input,.field textarea,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;outline:none;transition:border-color 0.2s}
+  .field input:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{min-height:80px;resize:vertical;font-family:inherit}
+  .checkbox-group{display:flex;flex-wrap:wrap;gap:8px}
+  .checkbox-item label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--dim);padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;transition:all .2s}
+  .checkbox-item input:checked + span,.checkbox-item label:has(input:checked){color:var(--text);border-color:var(--accent)}
+  .actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}.btn-primary:hover{opacity:.9}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+  .output-panel{display:flex;flex-direction:column;gap:10px}
+  .tabs{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:8px;width:fit-content}
+  .tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--dim);transition:all .2s}
+  .tab.active{background:var(--accent);color:white}
+  #output-md{width:100%;height:600px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:14px;font-family:'Fira Code','Cascadia Code',monospace;font-size:12px;resize:vertical;outline:none;line-height:1.6}
+  .preview{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;min-height:600px;overflow-y:auto;line-height:1.7}
+  .preview h1{font-size:1.8rem;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px}
+  .preview h2{font-size:1.3rem;margin:20px 0 10px;color:#a5b4fc}
+  .preview h3{font-size:1.1rem;margin:14px 0 6px;color:#c4b5fd}
+  .preview p{color:var(--dim);margin:6px 0}
+  .preview ul{margin:6px 0 6px 20px;color:var(--dim)}
+  .preview code{background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:#a5b4fc}
+  .preview pre{background:var(--surface2);padding:14px;border-radius:8px;overflow-x:auto;margin:10px 0}
+  .preview pre code{background:none;padding:0}
+  .preview a{color:var(--accent)}
+  .preview img{max-width:100%;border-radius:6px}
+  .preview blockquote{border-left:3px solid var(--accent);padding-left:12px;color:var(--dim);margin:10px 0}
+  .preview table{border-collapse:collapse;width:100%;margin:10px 0}
+  .preview th,.preview td{border:1px solid var(--border);padding:8px 12px;text-align:left}
+  .preview th{background:var(--surface2)}
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html">← DevToolkit</a>
+  <span class="logo">README Generator</span>
+</header>
+<div class="container">
+  <h1>📄 GitHub README Generator</h1>
+  <p class="subtitle">Fill in the form to generate a professional README.md for your GitHub project.</p>
+  
+  <div class="actions">
+    <button class="btn btn-primary" onclick="generate()">✨ Generate README</button>
+    <button class="btn btn-secondary" onclick="copyMarkdown()">📋 Copy Markdown</button>
+    <button class="btn btn-secondary" onclick="downloadMarkdown()">⬇️ Download .md</button>
+    <button class="btn btn-secondary" onclick="resetForm()">🗑️ Reset</button>
+  </div>
+  
+  <div class="layout">
+    <div class="form-panel">
+      
+      <div class="section">
+        <h3>📌 Basic Info</h3>
+        <div class="field"><label>Project Name</label><input id="name" placeholder="My Awesome Project"></div>
+        <div class="field"><label>Short Description</label><input id="desc" placeholder="A tool that does amazing things"></div>
+        <div class="field"><label>Longer Description (optional)</label><textarea id="longdesc" placeholder="Describe what your project does, why it exists, who it's for..."></textarea></div>
+        <div class="field"><label>Demo URL (optional)</label><input id="demo" placeholder="https://your-demo.vercel.app"></div>
+        <div class="field"><label>GitHub Repo URL</label><input id="repo" placeholder="https://github.com/username/repo"></div>
+      </div>
+      
+      <div class="section">
+        <h3>🛠️ Tech Stack</h3>
+        <div class="field"><label>Technologies (comma separated)</label><input id="tech" placeholder="React, Node.js, PostgreSQL, Docker"></div>
+        <div class="field"><label>Language</label>
+          <select id="lang">
+            <option value="">— Select main language —</option>
+            <option>JavaScript</option><option>TypeScript</option><option>Python</option>
+            <option>Go</option><option>Rust</option><option>Java</option>
+            <option>C++</option><option>Ruby</option><option>PHP</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h3>📦 Installation</h3>
+        <div class="field"><label>Install command</label><input id="install" placeholder="npm install"></div>
+        <div class="field"><label>Setup commands</label><textarea id="setup" placeholder="cp .env.example .env&#10;npm run db:migrate"></textarea></div>
+        <div class="field"><label>Run command</label><input id="run" placeholder="npm run dev"></div>
+      </div>
+      
+      <div class="section">
+        <h3>✨ Features</h3>
+        <div class="field"><label>Features (one per line)</label><textarea id="features" placeholder="User authentication&#10;Real-time updates via WebSockets&#10;Dark mode support&#10;Mobile responsive"></textarea></div>
+      </div>
+      
+      <div class="section">
+        <h3>📄 Sections to include</h3>
+        <div class="checkbox-group">
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-screenshot" checked><span>Screenshots</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-contributing" checked><span>Contributing</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-license" checked><span>License</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-roadmap"><span>Roadmap</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-faq"><span>FAQ</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-badges" checked><span>Badges</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-api"><span>API Reference</span></label></div>
+          <div class="checkbox-item"><label><input type="checkbox" id="inc-env"><span>Environment Variables</span></label></div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h3>📜 License</h3>
+        <select id="license">
+          <option value="MIT">MIT</option>
+          <option value="Apache-2.0">Apache 2.0</option>
+          <option value="GPL-3.0">GPL 3.0</option>
+          <option value="BSD-3-Clause">BSD 3-Clause</option>
+          <option value="ISC">ISC</option>
+          <option value="None">No license</option>
+        </select>
+      </div>
+      
+    </div>
+    
+    <div class="output-panel">
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('md', this)">Markdown</div>
+        <div class="tab" onclick="showTab('preview', this)">Preview</div>
+      </div>
+      <textarea id="output-md" readonly placeholder="Click 'Generate README' to create your README..."></textarea>
+      <div id="output-preview" class="preview hidden"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentMd = '';
+let viewMode = 'md';
+
+function g(id) { return document.getElementById(id)?.value?.trim() || ''; }
+function checked(id) { return document.getElementById(id)?.checked; }
+
+function getRepoInfo() {
+  const repo = g('repo');
+  const match = repo.match(/github\.com\/([^/]+)\/([^/]+)/);
+  return match ? { user: match[1], repo: match[2].replace('.git','') } : null;
+}
+
+function generate() {
+  const name = g('name') || 'My Project';
+  const desc = g('desc') || 'A description of my project';
+  const longdesc = g('longdesc');
+  const demo = g('demo');
+  const repo = getRepoInfo();
+  const tech = g('tech').split(',').map(t => t.trim()).filter(Boolean);
+  const lang = g('lang');
+  const install = g('install') || 'npm install';
+  const setup = g('setup');
+  const run = g('run') || 'npm run dev';
+  const features = g('features').split('\n').map(f => f.trim()).filter(Boolean);
+  const license = g('license');
+  
+  let md = '';
+  
+  // Title & Badges
+  md += `<div align="center">\n\n`;
+  md += `# ${name}\n\n`;
+  md += `### ${desc}\n\n`;
+  
+  if (checked('inc-badges') && repo) {
+    md += `[![GitHub Stars](https://img.shields.io/github/stars/${repo.user}/${repo.repo}?style=flat-square)](${g('repo')}/stargazers)\n`;
+    md += `[![GitHub Issues](https://img.shields.io/github/issues/${repo.user}/${repo.repo}?style=flat-square)](${g('repo')}/issues)\n`;
+    md += `[![License](https://img.shields.io/github/license/${repo.user}/${repo.repo}?style=flat-square)](#license)\n`;
+    if (lang) md += `[![${lang}](https://img.shields.io/badge/${lang.replace(/\s/g,'%20')}-blue?style=flat-square)](#)\n`;
+    md += '\n';
+  }
+  
+  if (demo) {
+    md += `**[🚀 Live Demo](${demo})** · `;
+  }
+  if (repo) {
+    md += `**[🐛 Report Bug](${g('repo')}/issues)** · **[✨ Request Feature](${g('repo')}/issues)**`;
+  }
+  md += '\n\n</div>\n\n';
+  
+  // Long description
+  if (longdesc) {
+    md += `## About\n\n${longdesc}\n\n`;
+  }
+  
+  // Screenshot placeholder
+  if (checked('inc-screenshot')) {
+    md += `## Screenshots\n\n`;
+    md += `![App Screenshot](https://via.placeholder.com/800x400?text=App+Screenshot)\n\n`;
+  }
+  
+  // Features
+  if (features.length > 0) {
+    md += `## Features\n\n`;
+    features.forEach(f => md += `- ✅ ${f}\n`);
+    md += '\n';
+  }
+  
+  // Tech stack
+  if (tech.length > 0) {
+    md += `## Built With\n\n`;
+    tech.forEach(t => md += `- **${t}**\n`);
+    md += '\n';
+  }
+  
+  // Getting Started
+  md += `## Getting Started\n\n`;
+  
+  // Prerequisites
+  md += `### Prerequisites\n\n`;
+  if (lang === 'JavaScript' || lang === 'TypeScript') {
+    md += `- Node.js 18+\n- npm or yarn\n\n`;
+  } else if (lang === 'Python') {
+    md += `- Python 3.10+\n- pip\n\n`;
+  } else if (lang === 'Go') {
+    md += `- Go 1.21+\n\n`;
+  } else {
+    md += `- List your prerequisites here\n\n`;
+  }
+  
+  // Installation
+  md += `### Installation\n\n`;
+  md += `1. Clone the repository\n\n\`\`\`bash\ngit clone ${g('repo') || 'https://github.com/username/repo.git'}\ncd ${name.toLowerCase().replace(/\s/g,'-')}\n\`\`\`\n\n`;
+  md += `2. Install dependencies\n\n\`\`\`bash\n${install}\n\`\`\`\n\n`;
+  
+  if (setup) {
+    md += `3. Configure and setup\n\n\`\`\`bash\n${setup}\n\`\`\`\n\n`;
+  }
+  
+  if (checked('inc-env')) {
+    md += `## Environment Variables\n\nCreate a \`.env\` file in the root directory:\n\n\`\`\`env\n# Required\nDATABASE_URL=postgresql://user:password@localhost:5432/dbname\nSECRET_KEY=your-secret-key\n\n# Optional\nNODE_ENV=development\nPORT=3000\n\`\`\`\n\n`;
+  }
+  
+  // Usage
+  md += `## Usage\n\n\`\`\`bash\n${run}\n\`\`\`\n\n`;
+  
+  // API Reference
+  if (checked('inc-api')) {
+    md += `## API Reference\n\n`;
+    md += `#### Get all items\n\n\`\`\`http\nGET /api/items\n\`\`\`\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| \`api_key\` | \`string\` | **Required**. Your API key |\n\n`;
+    md += `#### Create item\n\n\`\`\`http\nPOST /api/items\n\`\`\`\n\n\`\`\`json\n{\n  "name": "string",\n  "description": "string"\n}\n\`\`\`\n\n`;
+  }
+  
+  // Roadmap
+  if (checked('inc-roadmap')) {
+    md += `## Roadmap\n\n- [x] Core functionality\n- [ ] Feature 2\n- [ ] Feature 3\n- [ ] Multi-language support\n\nSee the [open issues](${g('repo') || '#'}/issues) for a full list of proposed features and known bugs.\n\n`;
+  }
+  
+  // Contributing
+  if (checked('inc-contributing')) {
+    md += `## Contributing\n\nContributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.\n\n1. Fork the Project\n2. Create your Feature Branch (\`git checkout -b feature/AmazingFeature\`)\n3. Commit your Changes (\`git commit -m 'Add some AmazingFeature'\`)\n4. Push to the Branch (\`git push origin feature/AmazingFeature\`)\n5. Open a Pull Request\n\n`;
+  }
+  
+  // FAQ
+  if (checked('inc-faq')) {
+    md += `## FAQ\n\n#### Q: Is this free to use?\n\nA: Yes, this project is open source and free to use under the ${license} license.\n\n#### Q: How do I report a bug?\n\nA: Please open an issue on the [GitHub Issues page](${g('repo') || '#'}/issues).\n\n`;
+  }
+  
+  // License
+  if (checked('inc-license') && license !== 'None') {
+    md += `## License\n\nDistributed under the ${license} License. See \`LICENSE\` for more information.\n\n`;
+  }
+  
+  // Contact
+  if (repo) {
+    md += `## Contact\n\n${repo.user} — [@${repo.user}](https://github.com/${repo.user})\n\nProject Link: [${g('repo')}](${g('repo')})\n\n`;
+  }
+  
+  currentMd = md;
+  
+  if (viewMode === 'md') {
+    document.getElementById('output-md').value = md;
+  } else {
+    renderPreview(md);
+  }
+}
+
+function renderPreview(md) {
+  // Very basic markdown to HTML converter for preview
+  let html = md
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Restore img tags we need
+    .replace(/\[([^\]]*)\]\((https?:\/\/[^)]+\.(?:png|jpg|gif|svg|webp)[^)]*)\)/gi, '<img src="$2" alt="$1">')
+    // Headers
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // Inline code
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    // Code blocks
+    .replace(/```[\w]*\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    // Links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // Lists
+    .replace(/^- \[x\] (.+)$/gm, '<li>✅ $1</li>')
+    .replace(/^- \[ \] (.+)$/gm, '<li>⬜ $1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+    // Badges (img)
+    .replace(/\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)/g, '<a href="$3"><img src="$2" alt="$1" style="display:inline-block;margin:2px"></a>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr>')
+    // Paragraphs
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[h|l|p|d|b|u|t|i|a])/gm, '');
+  
+  document.getElementById('output-preview').innerHTML = `<p>${html}</p>`;
+}
+
+function showTab(tab, btn) {
+  viewMode = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const md = document.getElementById('output-md');
+  const preview = document.getElementById('output-preview');
+  if (tab === 'md') {
+    md.classList.remove('hidden');
+    preview.classList.add('hidden');
+  } else {
+    md.classList.add('hidden');
+    preview.classList.remove('hidden');
+    if (currentMd) renderPreview(currentMd);
+  }
+}
+
+function copyMarkdown() {
+  if (!currentMd) return;
+  navigator.clipboard.writeText(currentMd).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy Markdown', 2000);
+  });
+}
+
+function downloadMarkdown() {
+  if (!currentMd) return;
+  const blob = new Blob([currentMd], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'README.md';
+  a.click();
+}
+
+function resetForm() {
+  document.querySelectorAll('input[type=text], textarea, select').forEach(el => el.value = '');
+  document.querySelectorAll('input[type=checkbox]').forEach(el => {
+    el.checked = ['inc-screenshot','inc-contributing','inc-license','inc-badges'].includes(el.id);
+  });
+  document.getElementById('output-md').value = '';
+  document.getElementById('output-preview').innerHTML = '';
+  currentMd = '';
+}
+
+// Auto-generate on Enter in key fields
+document.addEventListener('DOMContentLoaded', () => {
+  ['name','desc','repo'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') generate();
+    });
+  });
+});
+</script>
+</body>
+</html>
