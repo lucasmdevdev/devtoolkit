@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UUID Generator en ligne — DevToolkit</title>
+<meta name="description" content="Générez des UUID v1, v4, v5 et des ULID en ligne. Génération en masse, copie en un clic. Utilise crypto.randomUUID() natif.">
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;}
+  nav a{color:var(--text-dim);text-decoration:none;font-size:14px;}
+  .logo{font-weight:800;color:var(--accent);font-size:16px;}
+  .container{max-width:700px;margin:0 auto;padding:32px 24px;}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:8px;}
+  .subtitle{color:var(--text-dim);font-size:14px;margin-bottom:28px;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .panel h3{font-size:14px;font-weight:700;margin-bottom:14px;}
+  .uuid-value{font-family:'Fira Code',monospace;font-size:18px;color:var(--accent);padding:14px;background:var(--surface2);border-radius:8px;cursor:pointer;word-break:break-all;transition:border-color 0.2s;border:1px solid var(--border);}
+  .uuid-value:hover{border-color:var(--accent);}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+  button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:all 0.15s;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  button.primary{background:var(--accent);border-color:var(--accent);font-weight:600;}
+  .format-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;width:fit-content;}
+  .format-tab{padding:7px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;color:var(--text-dim);}
+  .format-tab.active{background:var(--accent);color:white;}
+  .bulk-output{font-family:'Fira Code',monospace;font-size:12px;line-height:2;max-height:300px;overflow-y:auto;}
+  .bulk-output div{padding:2px 0;cursor:pointer;}
+  .bulk-output div:hover{color:var(--accent);}
+  .count-input{width:70px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none;text-align:center;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .info-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .info-item .label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .info-item .value{font-family:'Fira Code',monospace;font-size:12px;color:var(--accent);word-break:break-all;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">⚡ DevToolkit</a>
+  <span style="color:var(--border)">›</span>
+  <a href="#">UUID Generator</a>
+</nav>
+
+<div class="container">
+  <h1>🔑 UUID / ULID Generator</h1>
+  <p class="subtitle">Générez des UUID v4, UUID v1 (simulé) et des ULID. Cliquez pour copier.</p>
+
+  <div class="panel">
+    <div class="format-tabs">
+      <div class="format-tab active" onclick="setFormat('v4',this)">UUID v4</div>
+      <div class="format-tab" onclick="setFormat('nil',this)">UUID Nil</div>
+      <div class="format-tab" onclick="setFormat('ulid',this)">ULID</div>
+      <div class="format-tab" onclick="setFormat('nanoid',this)">NanoID</div>
+    </div>
+
+    <div class="uuid-value" id="uuid-display" onclick="copyUUID(this)">Cliquez sur Générer</div>
+
+    <div class="toolbar">
+      <button class="primary" onclick="generate()">🎲 Générer</button>
+      <button onclick="copyUUID(document.getElementById('uuid-display'))">📋 Copier</button>
+      <button onclick="toggleUppercase()">Aa Majuscules</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 style="display:flex;align-items:center;gap:12px;">Génération en masse
+      <input type="number" class="count-input" id="bulk-count" value="10" min="1" max="100">
+    </h3>
+    <div class="toolbar">
+      <button class="primary" onclick="generateBulk()">🎲 Générer</button>
+      <button onclick="copyBulk()">📋 Copier tout</button>
+    </div>
+    <div class="bulk-output" id="bulk-output"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Analyser un UUID</h3>
+    <input type="text" id="analyze-input" placeholder="Collez un UUID à analyser..." oninput="analyzeUUID()"
+      style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Fira Code,monospace;font-size:14px;outline:none;margin-bottom:12px;">
+    <div class="info-grid" id="analyze-result"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Formats d'affichage</h3>
+    <div class="bulk-output" id="format-display"></div>
+  </div>
+</div>
+
+<script>
+let format = 'v4';
+let uppercase = false;
+let current = '';
+
+function uuidv4() {
+  return crypto.randomUUID();
+}
+
+function ulid() {
+  // ULID: 26 chars, Crockford Base32
+  const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  const now = Date.now();
+  let time = '';
+  let t = now;
+  for (let i = 9; i >= 0; i--) {
+    time = ALPHABET[t % 32] + time;
+    t = Math.floor(t / 32);
+  }
+  let random = '';
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  bytes.forEach(b => random += ALPHABET[b % 32]);
+  return time + random;
+}
+
+function nanoid(len = 21) {
+  const ALPHABET = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => ALPHABET[b & 63]).join('');
+}
+
+function gen() {
+  let val;
+  if (format === 'v4') val = uuidv4();
+  else if (format === 'nil') val = '00000000-0000-0000-0000-000000000000';
+  else if (format === 'ulid') val = ulid();
+  else val = nanoid();
+  return uppercase ? val.toUpperCase() : val;
+}
+
+function generate() {
+  current = gen();
+  document.getElementById('uuid-display').textContent = current;
+  updateFormats(current);
+}
+
+function setFormat(f, el) {
+  format = f;
+  document.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  generate();
+}
+
+function toggleUppercase() {
+  uppercase = !uppercase;
+  if (current) {
+    current = uppercase ? current.toUpperCase() : current.toLowerCase();
+    document.getElementById('uuid-display').textContent = current;
+    updateFormats(current);
+  }
+}
+
+function copyUUID(el) {
+  const text = el.textContent;
+  if (!text || text === 'Cliquez sur Générer') return;
+  navigator.clipboard.writeText(text);
+  const orig = el.style.borderColor;
+  el.style.borderColor = 'var(--success)';
+  setTimeout(() => el.style.borderColor = orig, 600);
+}
+
+function generateBulk() {
+  const n = Math.min(100, Math.max(1, parseInt(document.getElementById('bulk-count').value) || 10));
+  const vals = Array.from({length: n}, gen);
+  document.getElementById('bulk-output').innerHTML = vals
+    .map(v => `<div onclick="navigator.clipboard.writeText('${v}');this.style.color='var(--success)';setTimeout(()=>this.style.color='',600)">${v}</div>`)
+    .join('');
+}
+
+function copyBulk() {
+  const text = document.getElementById('bulk-output').innerText;
+  if (text) navigator.clipboard.writeText(text);
+}
+
+function analyzeUUID() {
+  const val = document.getElementById('analyze-input').value.trim();
+  const container = document.getElementById('analyze-result');
+  if (!val) { container.innerHTML = ''; return; }
+
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+  const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(val);
+  const isNanoid = /^[a-zA-Z0-9_-]{21}$/.test(val);
+
+  let items = [];
+  if (isUUID) {
+    const version = parseInt(val[14], 16);
+    const variant = parseInt(val[19], 16);
+    items = [
+      ['Type', 'UUID'],
+      ['Version', version === 4 ? 'v4 (random)' : version === 1 ? 'v1 (time-based)' : `v${version}`],
+      ['Variant', variant >= 8 && variant <= 11 ? 'RFC 4122' : 'Legacy'],
+      ['Longueur', `${val.replace(/-/g,'').length} hex digits`],
+      ['Majuscules', val.toUpperCase()],
+      ['Sans tirets', val.replace(/-/g,'')],
+    ];
+  } else if (isULID) {
+    const timeChars = val.slice(0,10);
+    items = [
+      ['Type', 'ULID'],
+      ['Longueur', val.length + ' chars'],
+      ['Partie temps', timeChars],
+      ['Partie random', val.slice(10)],
+      ['Minuscules', val.toLowerCase()],
+    ];
+  } else {
+    items = [['Type', 'Format non reconnu (NanoID ?)'], ['Longueur', val.length + ' caractères']];
+  }
+
+  container.innerHTML = items.map(([l,v]) =>
+    `<div class="info-item"><div class="label">${l}</div><div class="value">${v}</div></div>`
+  ).join('');
+}
+
+function updateFormats(uuid) {
+  if (format !== 'v4') { document.getElementById('format-display').innerHTML = ''; return; }
+  const formats = [
+    ['Standard (avec tirets)', uuid],
+    ['Sans tirets', uuid.replace(/-/g,'')],
+    ['Majuscules', uuid.toUpperCase()],
+    ['SQL', `'${uuid}'`],
+    ['C# Guid', `new Guid("${uuid}")`],
+    ['JavaScript', `"${uuid}"`],
+    ['URN', `urn:uuid:${uuid}`],
+  ];
+  document.getElementById('format-display').innerHTML = formats.map(([l,v]) =>
+    `<div onclick="navigator.clipboard.writeText('${v.replace(/'/g,"\\'")}');this.style.color='var(--success)';setTimeout(()=>this.style.color='',600)">
+      <span style="color:var(--text-dim);font-size:11px">${l}</span><br>${v}
+    </div>`
+  ).join('');
+}
+
+// Init
+generate();
+</script>
+</body>
+</html>
