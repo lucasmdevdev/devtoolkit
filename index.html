@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevToolkit — 22 Free Developer Tools, No Signup Required</title>
-<meta name="description" content="22 free browser-based developer tools: JSON formatter, Base64, JWT decoder, SQL formatter, CSV↔JSON, regex tester, password generator, HTTP status codes, and more. No signup, no ads, 100% local.">
-<meta property="og:title" content="DevToolkit — 22 Free Developer Tools, No Signup">
-<meta property="og:description" content="22 free browser-based tools: JSON formatter, Base64, JWT decoder, SQL formatter, CSV-JSON, regex tester, password generator, and more. No signup, no ads, 100% local.">
+<title>DevToolkit — 31 Free Developer Tools, No Signup Required</title>
+<meta name="description" content="31 free browser-based developer tools: JSON formatter, Base64, JWT decoder, SQL formatter, CSV↔JSON, regex tester, text case converter, box shadow generator, meta tags, and more. No signup, no ads, 100% local.">
+<meta property="og:title" content="DevToolkit — 31 Free Developer Tools, No Signup">
+<meta property="og:description" content="31 free browser-based tools for developers. JSON, regex, CSS, encoders, generators — no signup, no ads, everything runs locally.">
 <meta property="og:url" content="https://lucasmdevdev.github.io/devtoolkit/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DevToolkit — 22 Free Developer Tools">
-<meta name="twitter:description" content="22 free browser-based tools for developers. No signup, no ads, everything runs locally.">
+<meta name="twitter:title" content="DevToolkit — 31 Free Developer Tools">
+<meta name="twitter:description" content="31 free browser-based tools for developers. No signup, no ads, everything runs locally."
 <style>
   :root {
     --bg: #0f1117;
@@ -199,13 +199,13 @@
 <body>
 <header>
   <span class="logo">⚡ DevToolkit</span>
-  <span class="tagline">22 free tools — no signup, no ads</span>
+  <span class="tagline">31 free tools — no signup, no ads</span>
 </header>
 
 <div class="container">
   <div class="hero">
-    <h1>22 Free Developer Tools<br>in One Place</h1>
-    <p>JSON, Base64, JWT, SQL, CSV, Regex, QR codes and more — no signup, no tracking, everything runs locally.</p>
+    <h1>31 Free Developer Tools<br>in One Place</h1>
+    <p>JSON, Base64, JWT, SQL, CSS, Regex, QR codes, meta tags and more — no signup, no tracking, everything runs locally.</p>
     <div class="search-bar">
       <input type="text" id="search" placeholder="Search tools (json, base64, sql, csv...)..." oninput="filterTools()">
     </div>
@@ -452,6 +452,54 @@ const TOOLS = [
     desc: "Convert JSON to TypeScript interfaces or types. Auto-detects nested objects, arrays, optional properties.",
     category: "converters",
     href: "tools/json-to-typescript.html"
+  },
+  {
+    id: "text-case",
+    name: "Text Case Converter",
+    icon: "🔤",
+    desc: "Convert text to camelCase, PascalCase, snake_case, kebab-case, SCREAMING_SNAKE, dot.case and more.",
+    category: "converters",
+    href: "tools/text-case.html"
+  },
+  {
+    id: "word-counter",
+    name: "Word & Character Counter",
+    icon: "📊",
+    desc: "Count words, characters, sentences, paragraphs, reading time and word frequency. For blog posts and docs.",
+    category: "testers",
+    href: "tools/word-counter.html"
+  },
+  {
+    id: "px-rem",
+    name: "PX ↔ REM Converter",
+    icon: "📐",
+    desc: "Convert between pixels and rem units. Custom base font size, reference table for common values.",
+    category: "converters",
+    href: "tools/px-rem.html"
+  },
+  {
+    id: "box-shadow",
+    name: "CSS Box Shadow Generator",
+    icon: "🌑",
+    desc: "Visually generate CSS box-shadow values with live preview. Offset, blur, spread, color, opacity, inset.",
+    category: "generators",
+    href: "tools/box-shadow.html"
+  },
+  {
+    id: "meta-generator",
+    name: "Meta Tag Generator",
+    icon: "🏷️",
+    desc: "Generate SEO, Open Graph, and Twitter Card meta tags. Google preview included. Copy-paste ready HTML.",
+    category: "generators",
+    href: "tools/meta-generator.html"
+  },
+  {
+    id: "image-base64",
+    name: "Image to Base64",
+    icon: "🖼️",
+    desc: "Convert images to Base64. Get Data URL, raw Base64, CSS background-image, or HTML img tag. 100% local.",
+    category: "encoders",
+    href: "tools/image-base64.html"
   },
 ];
 

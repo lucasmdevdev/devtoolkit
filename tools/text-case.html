@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Case Converter — DevToolkit</title>
+<style>
+  :root { --bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--accent2:#8b5cf6;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  .logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-decoration:none}
+  .container{max-width:900px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--text-dim);margin-bottom:28px}
+  textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:14px;border-radius:8px;font-family:'JetBrains Mono',monospace,sans-serif;font-size:14px;resize:vertical;min-height:140px;outline:none}
+  textarea:focus{border-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:20px}
+  .case-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:border-color .2s}
+  .case-card:hover{border-color:var(--accent)}
+  .case-label{font-size:11px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;letter-spacing:.05em}
+  .case-preview{font-size:13px;font-family:monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+  .case-copy{background:var(--accent);color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;width:100%}
+  .case-copy:hover{opacity:.9}
+  .copied{background:var(--success)!important}
+  .back{color:var(--text-dim);text-decoration:none;font-size:14px}
+  .back:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo">⚡ DevToolkit</a>
+  <a href="../index.html" class="back">← All tools</a>
+</header>
+<div class="container">
+  <h1>🔤 Text Case Converter</h1>
+  <p class="subtitle">Convert text to camelCase, PascalCase, snake_case, kebab-case, and more instantly.</p>
+  <textarea id="input" placeholder="Type or paste your text here..." oninput="updateAll()">the quick brown fox jumps over the lazy dog</textarea>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const converters = [
+  { label: 'camelCase', fn: s => s.replace(/[^a-zA-Z0-9]+(.)/g,(_,c)=>c.toUpperCase()).replace(/^[A-Z]/,c=>c.toLowerCase()) },
+  { label: 'PascalCase', fn: s => s.replace(/[^a-zA-Z0-9]+(.)/g,(_,c)=>c.toUpperCase()).replace(/^[a-z]/,c=>c.toUpperCase()) },
+  { label: 'snake_case', fn: s => s.replace(/([A-Z])/g,'_$1').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase() },
+  { label: 'SCREAMING_SNAKE', fn: s => s.replace(/([A-Z])/g,'_$1').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toUpperCase() },
+  { label: 'kebab-case', fn: s => s.replace(/([A-Z])/g,'-$1').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase() },
+  { label: 'COBOL-CASE', fn: s => s.replace(/([A-Z])/g,'-$1').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase() },
+  { label: 'dot.case', fn: s => s.replace(/([A-Z])/g,'.$1').replace(/[^a-zA-Z0-9]+/g,'.').replace(/^\.|\.$/g,'').toLowerCase() },
+  { label: 'path/case', fn: s => s.replace(/([A-Z])/g,'/$1').replace(/[^a-zA-Z0-9]+/g,'/').replace(/^\/|\/$/g,'').toLowerCase() },
+  { label: 'Title Case', fn: s => s.toLowerCase().replace(/(^|[\s-_])\S/g,m=>m.toUpperCase()) },
+  { label: 'UPPER CASE', fn: s => s.toUpperCase() },
+  { label: 'lower case', fn: s => s.toLowerCase() },
+  { label: 'Sentence case', fn: s => s.toLowerCase().replace(/^\s*\S/,m=>m.toUpperCase()) },
+];
+
+function updateAll() {
+  const input = document.getElementById('input').value;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = converters.map((c,i) => {
+    const result = c.fn(input);
+    return `<div class="case-card">
+      <div class="case-label">${c.label}</div>
+      <div class="case-preview">${result.slice(0,50)}</div>
+      <button class="case-copy" onclick="copyCase(${i})">Copy</button>
+    </div>`;
+  }).join('');
+}
+
+function copyCase(i) {
+  const input = document.getElementById('input').value;
+  const result = converters[i].fn(input);
+  navigator.clipboard.writeText(result);
+  const btns = document.querySelectorAll('.case-copy');
+  btns[i].textContent = 'Copied!';
+  btns[i].classList.add('copied');
+  setTimeout(()=>{ btns[i].textContent='Copy'; btns[i].classList.remove('copied'); }, 1500);
+}
+
+updateAll();
+</script>
+</body>
+</html>

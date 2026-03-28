@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Tag Generator — DevToolkit</title>
+<style>
+  :root{--bg:#0f1117;--surface:#1a1d2e;--surface2:#252836;--border:#2e3150;--accent:#6366f1;--accent2:#8b5cf6;--text:#e2e8f0;--text-dim:#94a3b8;--success:#10b981;--warn:#f59e0b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  .logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-decoration:none}
+  .back{color:var(--text-dim);text-decoration:none;font-size:14px}
+  .container{max-width:900px;margin:0 auto;padding:32px 24px}
+  h1{font-size:1.8rem;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--text-dim);margin-bottom:28px}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);margin-bottom:6px}
+  .form-group label .count{color:var(--warn)}
+  .form-group label .ok{color:var(--success)}
+  input,textarea,select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:14px;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  textarea{resize:vertical;min-height:80px;line-height:1.5}
+  select option{background:var(--surface)}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:20px}
+  .section h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);margin-bottom:16px}
+  .preview-section{margin-top:24px}
+  .preview-section h3{font-size:1rem;color:var(--text-dim);margin-bottom:12px}
+  .google-preview{background:white;border-radius:8px;padding:20px;max-width:600px}
+  .gp-url{font-size:12px;color:#006621;margin-bottom:3px}
+  .gp-title{font-size:18px;color:#1a0dab;margin-bottom:3px;text-decoration:underline}
+  .gp-desc{font-size:13px;color:#545454;line-height:1.4}
+  .output{background:var(--surface2);border-radius:8px;padding:16px;font-family:monospace;font-size:13px;color:var(--text);white-space:pre-wrap;overflow-x:auto;margin-top:16px}
+  .copy-btn{background:var(--accent);color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-top:12px;width:100%}
+  .copy-btn:hover{opacity:.9}
+</style>
+</head>
+<body>
+<header>
+  <a href="../index.html" class="logo">⚡ DevToolkit</a>
+  <a href="../index.html" class="back">← All tools</a>
+</header>
+<div class="container">
+  <h1>🏷️ Meta Tag Generator</h1>
+  <p class="subtitle">Generate SEO, Open Graph, and Twitter Card meta tags for your webpage.</p>
+
+  <div class="section">
+    <h3>Basic SEO</h3>
+    <div class="form-group">
+      <label>Page Title <span id="title-count" class="count">0/60</span></label>
+      <input type="text" id="title" placeholder="My Awesome Page Title" oninput="update()" maxlength="70">
+    </div>
+    <div class="form-group">
+      <label>Description <span id="desc-count" class="count">0/160</span></label>
+      <textarea id="description" placeholder="A brief description of your page for search engines (150-160 characters recommended)..." oninput="update()" maxlength="200"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Keywords (comma separated)</label>
+      <input type="text" id="keywords" placeholder="web, development, tools, free" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>Author</label>
+      <input type="text" id="author" placeholder="Your Name" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>Robots</label>
+      <select id="robots" onchange="update()">
+        <option value="index, follow">index, follow (default — all)</option>
+        <option value="noindex, follow">noindex, follow — hide from search</option>
+        <option value="index, nofollow">index, nofollow — don't follow links</option>
+        <option value="noindex, nofollow">noindex, nofollow — completely hide</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Open Graph (Facebook / LinkedIn / Slack)</h3>
+    <div class="form-group">
+      <label>OG Title (leave empty to use page title)</label>
+      <input type="text" id="og-title" placeholder="Same as page title by default" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>OG Description (leave empty to use description)</label>
+      <input type="text" id="og-desc" placeholder="Same as description by default" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>Page URL</label>
+      <input type="url" id="og-url" placeholder="https://yoursite.com/page" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>Image URL (1200x630px recommended)</label>
+      <input type="url" id="og-image" placeholder="https://yoursite.com/og-image.jpg" oninput="update()">
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="og-type" onchange="update()">
+        <option value="website">website</option>
+        <option value="article">article</option>
+        <option value="product">product</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="preview-section">
+    <h3>Google Preview</h3>
+    <div class="google-preview">
+      <div class="gp-url" id="gp-url">https://yoursite.com › page</div>
+      <div class="gp-title" id="gp-title">Your Page Title</div>
+      <div class="gp-desc" id="gp-desc">Your page description will appear here...</div>
+    </div>
+  </div>
+
+  <div class="preview-section">
+    <h3>Generated HTML</h3>
+    <div class="output" id="output"></div>
+    <button class="copy-btn" onclick="copyTags()">Copy All Tags</button>
+  </div>
+</div>
+<script>
+function e(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+function update(){
+  const title=document.getElementById('title').value;
+  const desc=document.getElementById('description').value;
+  const keywords=document.getElementById('keywords').value;
+  const author=document.getElementById('author').value;
+  const robots=document.getElementById('robots').value;
+  const ogTitle=document.getElementById('og-title').value||title;
+  const ogDesc=document.getElementById('og-desc').value||desc;
+  const ogUrl=document.getElementById('og-url').value;
+  const ogImage=document.getElementById('og-image').value;
+  const ogType=document.getElementById('og-type').value;
+
+  // Counters
+  const tc=document.getElementById('title-count');
+  tc.textContent=`${title.length}/60`;
+  tc.className=title.length>60?'count':title.length>=50?'ok':'count';
+
+  const dc=document.getElementById('desc-count');
+  dc.textContent=`${desc.length}/160`;
+  dc.className=desc.length>160?'count':desc.length>=130?'ok':'count';
+
+  // Google preview
+  document.getElementById('gp-url').textContent=ogUrl||'https://yoursite.com › page';
+  document.getElementById('gp-title').textContent=title||'Your Page Title';
+  document.getElementById('gp-desc').textContent=desc||'Your page description will appear here...';
+
+  // Generate tags
+  let tags=`<!-- Primary Meta Tags -->\n`;
+  if(title) tags+=`<meta name="title" content="${e(title)}">\n`;
+  if(title) tags+=`<title>${e(title)}</title>\n`;
+  if(desc) tags+=`<meta name="description" content="${e(desc)}">\n`;
+  if(keywords) tags+=`<meta name="keywords" content="${e(keywords)}">\n`;
+  if(author) tags+=`<meta name="author" content="${e(author)}">\n`;
+  tags+=`<meta name="robots" content="${robots}">\n`;
+  tags+=`<meta name="viewport" content="width=device-width, initial-scale=1.0">\n\n`;
+
+  tags+=`<!-- Open Graph / Facebook -->\n`;
+  tags+=`<meta property="og:type" content="${ogType}">\n`;
+  if(ogUrl) tags+=`<meta property="og:url" content="${e(ogUrl)}">\n`;
+  if(ogTitle) tags+=`<meta property="og:title" content="${e(ogTitle)}">\n`;
+  if(ogDesc) tags+=`<meta property="og:description" content="${e(ogDesc)}">\n`;
+  if(ogImage) tags+=`<meta property="og:image" content="${e(ogImage)}">\n`;
+  tags+=`\n`;
+
+  tags+=`<!-- Twitter -->\n`;
+  tags+=`<meta property="twitter:card" content="summary_large_image">\n`;
+  if(ogUrl) tags+=`<meta property="twitter:url" content="${e(ogUrl)}">\n`;
+  if(ogTitle) tags+=`<meta property="twitter:title" content="${e(ogTitle)}">\n`;
+  if(ogDesc) tags+=`<meta property="twitter:description" content="${e(ogDesc)}">\n`;
+  if(ogImage) tags+=`<meta property="twitter:image" content="${e(ogImage)}">\n`;
+
+  document.getElementById('output').textContent=tags;
+}
+
+function copyTags(){
+  navigator.clipboard.writeText(document.getElementById('output').textContent);
+  const btn=document.querySelector('.copy-btn');
+  btn.textContent='Copied!';
+  btn.style.background='#10b981';
+  setTimeout(()=>{btn.textContent='Copy All Tags';btn.style.background='';},1500);
+}
+
+update();
+</script>
+</body>
+</html>
